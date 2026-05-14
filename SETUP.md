@@ -163,10 +163,11 @@ Open the file in VSCode. It should look like this when filled in:
 ```env
 VITE_CLERK_PUBLISHABLE_KEY=pk_test_YOUR_KEY_HERE
 VITE_API_URL=http://localhost:8080
-VITE_CLERK_PROXY_URL=http://localhost:8080/api/__clerk
 PORT=3000
 BASE_PATH=/
 ```
+
+> **Do not add `VITE_CLERK_PROXY_URL` here.** That setting is only for custom production domains — adding it for local development will crash the app with a "Failed to load Clerk JS" error.
 
 ### Add to `artifacts\api-server\.env`
 
@@ -410,6 +411,11 @@ pnpm --filter @workspace/db run push
 1. Confirm Terminal 1 shows `Server listening  port: 8080`
 2. Confirm `VITE_API_URL=http://localhost:8080` is in `artifacts\learn\.env`
 3. Restart the API server terminal
+
+### `Failed to load Clerk JS` error in the browser console
+Your `artifacts\learn\.env` has a `VITE_CLERK_PROXY_URL=http://localhost:8080/...` line. This setting is only for custom production domains and will crash the app when using development keys.
+
+**Fix:** Open `artifacts\learn\.env` and delete the `VITE_CLERK_PROXY_URL=...` line entirely, then hard-refresh the browser (`Ctrl+Shift+R`).
 
 ### Sign-in does not work / Clerk errors
 - Confirm `VITE_CLERK_PUBLISHABLE_KEY` in `artifacts\learn\.env` matches `CLERK_PUBLISHABLE_KEY` in `artifacts\api-server\.env` — same value, same `pk_test_...` string

@@ -32,11 +32,17 @@ const clerkPubKey = publishableKeyFromHost(
   import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
 );
 
-// Only use the Clerk proxy when running locally — on Replit/production the
-// browser cannot reach localhost:8080, so we let Clerk load from its own CDN.
+// Clerk proxy rules:
+//  1. No proxy set → load directly from Clerk CDN (always safe)
+//  2. Dev keys (pk_test_) → proxy is unsupported by Clerk, skip it
+//  3. Proxy points to localhost but browser is not on localhost → skip it
+//     (happens when viewing Replit preview while .env has localhost proxy)
+//  4. All other cases → use the proxy (production custom-domain deployments)
 const clerkProxyUrl = (() => {
   const proxy = import.meta.env.VITE_CLERK_PROXY_URL as string | undefined;
   if (!proxy) return undefined;
+  const isDevKey = clerkPubKey?.startsWith("pk_test_");
+  if (isDevKey) return undefined;
   const isLocalBrowser = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
   if (!isLocalBrowser && proxy.includes("localhost")) return undefined;
   return proxy;
