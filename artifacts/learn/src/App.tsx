@@ -32,7 +32,15 @@ const clerkPubKey = publishableKeyFromHost(
   import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
 );
 
-const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
+// Only use the Clerk proxy when running locally — on Replit/production the
+// browser cannot reach localhost:8080, so we let Clerk load from its own CDN.
+const clerkProxyUrl = (() => {
+  const proxy = import.meta.env.VITE_CLERK_PROXY_URL as string | undefined;
+  if (!proxy) return undefined;
+  const isLocalBrowser = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+  if (!isLocalBrowser && proxy.includes("localhost")) return undefined;
+  return proxy;
+})();
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 function stripBase(path: string): string {
