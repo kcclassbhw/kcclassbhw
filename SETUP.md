@@ -1,7 +1,9 @@
 # KC Class BHW — Local Development Setup (Windows 11)
 
-**Tested on:** Windows 11 · VSCode · Node 22 · pnpm 9+ · Git  
+**Tested on:** Windows 11 · VSCode · Node 22 · pnpm 10+ · Git  
 **Time to complete:** ~20 minutes on first run
+
+> **Before starting:** Read **[REQUIREMENTS.md](./REQUIREMENTS.md)** to make sure you have all accounts (Clerk, Neon) and tools set up first.
 
 ---
 
