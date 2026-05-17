@@ -10,7 +10,7 @@ A subscription-based B.Ed English learning platform. Students browse free course
 |---|---|
 | **[REQUIREMENTS.md](./REQUIREMENTS.md)** | Everything you need before starting — tools, accounts, env vars |
 | **[SETUP.md](./SETUP.md)** | Local development setup on Windows 11 (step-by-step) |
-| **[DEPLOY.md](./DEPLOY.md)** | Deploy to Render (API) + Vercel (frontend) with Neon (database) |
+| **[DEPLOY.md](./DEPLOY.md)** | Deploy to Render (API) + Vercel or Netlify (frontend) with Neon (database) |
 | **[LAUNCH_GUIDE.md](./LAUNCH_GUIDE.md)** | Post-deploy: admin setup, eSewa live payments, adding content |
 
 **Recommended reading order for a new developer:**
@@ -96,9 +96,10 @@ KC-Class/
 │   └── db/src/schema/               # Drizzle ORM schema (users, courses, lessons, etc.)
 ├── scripts/                          # Utility scripts
 ├── .vscode/                          # VSCode tasks, extensions, settings
+├── netlify.toml                      # Netlify build config (SPA redirect rules included)
 ├── REQUIREMENTS.md                   # All prerequisites and accounts needed
 ├── SETUP.md                          # Local development setup
-├── DEPLOY.md                         # Render + Vercel deployment
+├── DEPLOY.md                         # Render + Vercel/Netlify deployment
 └── LAUNCH_GUIDE.md                   # Post-deploy launch steps
 ```
 

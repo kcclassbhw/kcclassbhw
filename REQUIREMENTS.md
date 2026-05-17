@@ -93,6 +93,17 @@ You need accounts on these services. All have generous free tiers.
 
 ---
 
+### 2.5b Netlify (Alternative Frontend Hosting)
+
+**What for:** Same as Vercel — hosting the React frontend. Use Netlify if you prefer it or if you already have an account there. You only need one of Vercel or Netlify, not both.
+
+The repository includes a `netlify.toml` file at the root — Netlify reads it automatically so no manual build configuration is needed.
+
+1. Go to https://netlify.com → **Sign Up** → sign up with GitHub
+2. No further setup needed now — you import the project during deployment (see `DEPLOY.md`)
+
+---
+
 ### 2.6 eSewa Merchant Account (For Live Payments Only)
 
 **What for:** Accepting real NPR payments from students. Not needed for local development or testing — the app runs in eSewa sandbox mode by default.
