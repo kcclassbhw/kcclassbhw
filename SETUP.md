@@ -194,16 +194,77 @@ In the VSCode terminal:
 pnpm --filter @workspace/db run push
 ```
 
-Expected output — you will be prompted to confirm, type `y` and press Enter:
+Drizzle reads your `DATABASE_URL` from `artifacts\api-server\.env`, connects to the database, compares the schema, and creates any missing tables.
+
+### What you should see
+
 ```
+[✓] Pulling schema from database...
 [✓] Changes applied
 ```
 
-> **If you see `DATABASE_URL is not set`:**
-> `artifacts\api-server\.env` is missing or the `DATABASE_URL=` line is empty. Go back to Step 5.
+If tables already exist and nothing changed, it prints nothing and exits silently — that is normal, not a hang.
 
-> **If you see `ECONNREFUSED 127.0.0.1:5432`:**
-> Local PostgreSQL is not running. Open Services (`Win+R` → `services.msc`) → find `postgresql-x64-XX` → right-click → Start. Or switch to Neon (Step 4 Option A).
+### If it asks a Y/N question
+
+Drizzle sometimes shows an interactive confirmation before applying changes:
+```
+? Do you want to apply the changes? › (y/N)
+```
+Type `y` and press **Enter**.
+
+If this prompt hangs or your terminal does not handle it correctly, use the force variant instead — it skips all prompts:
+```powershell
+pnpm --filter @workspace/db run push-force
+```
+
+---
+
+### Drizzle error reference
+
+**`ERROR: DATABASE_URL is not set`**
+
+`artifacts\api-server\.env` does not exist, or the `DATABASE_URL` line still says `REPLACE_WITH_YOUR_CONNECTION_STRING`. Go back to Steps 3–4 and replace it with your real Neon or local PostgreSQL connection string.
+
+**`ECONNREFUSED 127.0.0.1:5432` or `connection refused`**
+
+Your local PostgreSQL is not running (only applies to Option B in Step 4). Fix:
+- Press `Win+R` → type `services.msc` → press Enter
+- Find `postgresql-x64-XX` in the list → right-click → **Start**
+
+Or switch to Neon (Step 4, Option A) — no local install needed.
+
+**`SSL SYSCALL error: EOF detected` or `unable to get local issuer certificate`**
+
+This is a Windows SSL issue when connecting to Neon. The code already handles this automatically by setting `ssl: { rejectUnauthorized: false }` for Neon URLs. If you still see this error, check that your `DATABASE_URL` contains `neon.tech` in the hostname — if you are using a different hosted PostgreSQL provider, contact support or switch to Neon.
+
+**`password authentication failed for user "postgres"`**
+
+The password in your `DATABASE_URL` is wrong. For local PostgreSQL, use the exact password you set during installation. For Neon, copy the connection string directly from the Neon dashboard — do not type it manually.
+
+**`database "learnhub" does not exist`**
+
+For local PostgreSQL (Option B): you need to create the database first. Open SQL Shell (psql) from the Start menu and run:
+```sql
+CREATE DATABASE learnhub;
+\q
+```
+Then re-run push.
+
+**Drizzle prints nothing and hangs**
+
+Drizzle is waiting for a Y/N confirmation that your terminal is not displaying. Press `y` then **Enter**, or use `push-force` to skip it entirely:
+```powershell
+pnpm --filter @workspace/db run push-force
+```
+
+**`Cannot find package '@esbuild-kit/esm-loader'` or ESM errors**
+
+This means the pnpm workspace packages are not installed. Run:
+```powershell
+pnpm install
+```
+Then retry push.
 
 ---
 
