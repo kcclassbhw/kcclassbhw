@@ -52,19 +52,66 @@ export const requireActiveSubscription = async (req: any, res: any, next: any): 
   next();
 };
 
+/**
+ * Fetches the full user record from Clerk's API and upserts it into the DB.
+ * Used as a fallback when the webhook hasn't fired yet (e.g. dev mode or
+ * the webhook is not yet configured).
+ */
+export async function upsertUserFromClerk(clerkId: string): Promise<void> {
+  const { clerkClient } = await import("@clerk/express");
+  const clerkUser = await clerkClient.users.getUser(clerkId);
+
+  const email =
+    clerkUser.emailAddresses.find(
+      (e: { id: string; emailAddress: string }) =>
+        e.id === clerkUser.primaryEmailAddressId,
+    )?.emailAddress ?? "";
+
+  const name =
+    [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ").trim() ||
+    clerkUser.username ||
+    "";
+
+  const avatarUrl = clerkUser.imageUrl || null;
+
+  await db
+    .insert(usersTable)
+    .values({ clerkId, email, name, avatarUrl })
+    .onConflictDoUpdate({
+      target: usersTable.clerkId,
+      set: { email, name, avatarUrl },
+    });
+}
+
+/**
+ * Middleware that ensures the authenticated user has a row in the DB.
+ * Runs on every authenticated request — creates the row on first visit by
+ * pulling full profile data from Clerk's API (name, email, avatar).
+ * The Clerk webhook keeps data in sync after that.
+ */
 export const ensureUser = async (req: any, res: any, next: any): Promise<void> => {
   const auth = getAuth(req);
   const userId = auth?.sessionClaims?.userId || auth?.userId;
   if (!userId) { next(); return; }
   req.userId = userId as string;
-  const [existing] = await db.select().from(usersTable).where(eq(usersTable.clerkId, userId as string));
+
+  const [existing] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.clerkId, userId as string));
+
   if (!existing) {
-    await db.insert(usersTable).values({
-      clerkId: userId as string,
-      email: (auth?.sessionClaims?.email as string) || "",
-      name: (auth?.sessionClaims?.name as string) || (auth?.sessionClaims?.firstName as string) || "",
-    }).onConflictDoNothing();
+    try {
+      await upsertUserFromClerk(userId as string);
+    } catch {
+      // Fallback: create a minimal row so the request can proceed
+      await db
+        .insert(usersTable)
+        .values({ clerkId: userId as string, email: "", name: "" })
+        .onConflictDoNothing();
+    }
   }
+
   next();
 };
 

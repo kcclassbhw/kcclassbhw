@@ -126,6 +126,9 @@ importers:
       stripe:
         specifier: ^22.1.1
         version: 22.1.1(@types/node@25.3.5)
+      svix:
+        specifier: ^1.93.0
+        version: 1.93.0
     devDependencies:
       '@types/cookie-parser':
         specifier: ^1.4.10
@@ -3403,6 +3406,9 @@ packages:
       '@types/node':
         optional: true
 
+  svix@1.93.0:
+    resolution: {integrity: sha512-AeCcSs+CrHNejZytBuvD4hw2B14rB7+Sq7ggwYgF22TgXh0uJJ3T4uVJSbSYKFSbO1AA4o470XoGgOYqu2fbSA==}
+
   swr@2.3.4:
     resolution: {integrity: sha512-bYd2lrhc+VarcpkgWclcUi92wYCpOgMws9Sd1hG1ntAu0NEy+14CbotuFjshBU2kt9rYj9TSmDcybpxpeTU1fg==}
     peerDependencies:
@@ -6373,6 +6379,10 @@ snapshots:
   stripe@22.1.1(@types/node@25.3.5):
     optionalDependencies:
       '@types/node': 25.3.5
+
+  svix@1.93.0:
+    dependencies:
+      standardwebhooks: 1.0.0
 
   swr@2.3.4(react@19.1.0):
     dependencies:

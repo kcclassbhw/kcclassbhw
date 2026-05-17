@@ -35,6 +35,9 @@ app.use(
 
 app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
 
+// Raw body for Clerk webhook signature verification — must be before express.json()
+app.use("/api/webhooks/clerk", express.raw({ type: "application/json" }));
+
 const corsOrigin = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(",").map((o) => o.trim())
   : true;

@@ -147,6 +147,39 @@ your API is live. Copy the Render URL — it looks like:
 https://kc-class-api.onrender.com
 ```
 
+### 2.6 — Connect Clerk Webhooks (instant user sync to Neon)
+
+This step makes Clerk write user data to your database the moment someone signs up, updates their profile, or deletes their account. Without it, sync still works — but only on the user's first API call, and with less data.
+
+**In the Clerk dashboard:**
+
+1. Go to [dashboard.clerk.com](https://dashboard.clerk.com) → your app → **Webhooks** in the left sidebar
+2. Click **Add Endpoint**
+3. Fill in:
+   - **Endpoint URL**: `https://kc-class-api.onrender.com/api/webhooks/clerk`
+   - **Events to subscribe**: tick all three:
+     - `user.created`
+     - `user.updated`
+     - `user.deleted`
+4. Click **Create**
+5. On the next screen, click **Signing Secret** to reveal it — it starts with `whsec_`
+6. Copy it
+
+**Back on Render:**
+
+7. Go to your Web Service → **Environment** tab
+8. Add a new variable:
+
+   | Key | Value |
+   |---|---|
+   | `CLERK_WEBHOOK_SECRET` | `whsec_...` *(the signing secret you just copied)* |
+
+9. Click **Save Changes** — Render redeploys automatically (1–2 minutes)
+
+**Test it:**
+
+Once Render redeploys, go back to Clerk → Webhooks → click your endpoint → **Send test event** → choose `user.created` → **Send**. You should see `200 OK` in the response. After that, every signup automatically appears in your Neon database.
+
 ---
 
 ## Part 3 — Frontend on Vercel
@@ -296,6 +329,7 @@ NODE_ENV=production
 DATABASE_URL=postgresql://...neon.tech/...?sslmode=require
 CLERK_PUBLISHABLE_KEY=pk_live_...
 CLERK_SECRET_KEY=sk_live_...
+CLERK_WEBHOOK_SECRET=whsec_...
 CORS_ORIGIN=https://your-app.vercel.app
 ESEWA_PRODUCT_CODE=your_merchant_code
 ESEWA_SECRET_KEY=your_esewa_secret

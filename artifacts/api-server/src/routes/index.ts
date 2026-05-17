@@ -8,6 +8,7 @@ import subscriptionsRouter from "./subscriptions";
 import dashboardRouter from "./dashboard";
 import adminRouter from "./admin";
 import videosRouter from "./videos";
+import webhooksRouter from "./webhooks";
 
 const router: IRouter = Router();
 
@@ -23,5 +24,6 @@ router.use(subscriptionsRouter);
 router.use(dashboardRouter);
 router.use(adminRouter);
 router.use(videosRouter);
+router.use(webhooksRouter);
 
 export default router;

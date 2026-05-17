@@ -6,7 +6,7 @@ import {
   UpdateUserRoleBody,
   UpdateMeBody,
 } from "@workspace/api-zod";
-import { requireAuth, requireAdmin } from "./auth";
+import { requireAuth, requireAdmin, upsertUserFromClerk } from "./auth";
 
 const router: IRouter = Router();
 
@@ -88,8 +88,13 @@ router.patch("/admin/users/:clerkId/role", requireAdmin, async (req, res): Promi
 router.get("/users/me", requireAuth, async (req: any, res): Promise<void> => {
   let [user] = await db.select().from(usersTable).where(eq(usersTable.clerkId, req.userId));
   if (!user) {
-    // Auto-create on first access
-    [user] = await db.insert(usersTable).values({ clerkId: req.userId, email: "", name: "" }).returning();
+    // Fetch full profile from Clerk and create the DB row
+    try {
+      await upsertUserFromClerk(req.userId);
+    } catch {
+      await db.insert(usersTable).values({ clerkId: req.userId, email: "", name: "" }).onConflictDoNothing();
+    }
+    [user] = await db.select().from(usersTable).where(eq(usersTable.clerkId, req.userId));
   }
   const [sub] = await db.select().from(subscriptionsTable).where(eq(subscriptionsTable.userId, req.userId));
   res.json({ ...user, subscription: sub ?? null });
