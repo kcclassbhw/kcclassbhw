@@ -61,7 +61,10 @@ router.post("/subscriptions/checkout", requireAuth, async (req: any, res): Promi
   const plan = parsed.data.plan as "monthly" | "yearly";
   const amount = plan === "yearly" ? YEARLY_PRICE : MONTHLY_PRICE;
   const transactionUuid = `LH-${req.userId.slice(-8)}-${Date.now()}`;
-  const origin = req.headers.origin || "http://localhost";
+
+  // Use FRONTEND_URL env var (set on Render) so the redirect target is
+  // always the trusted frontend — never taken from the request Origin header.
+  const frontendUrl = process.env.FRONTEND_URL?.replace(/\/$/, "") || "http://localhost:3000";
   const signature = makeSignature(amount, transactionUuid, ESEWA_PRODUCT_CODE);
 
   res.json({
@@ -74,22 +77,32 @@ router.post("/subscriptions/checkout", requireAuth, async (req: any, res): Promi
       product_code: ESEWA_PRODUCT_CODE,
       product_service_charge: "0",
       product_delivery_charge: "0",
-      success_url: `${origin}/payment/verify?plan=${plan}`,
-      failure_url: `${origin}/pricing?checkout=canceled`,
+      success_url: `${frontendUrl}/payment/verify?plan=${plan}`,
+      failure_url: `${frontendUrl}/pricing?checkout=canceled`,
       signed_field_names: "total_amount,transaction_uuid,product_code",
       signature,
     },
   });
 });
 
+const VALID_PLANS = ["monthly", "yearly"] as const;
+type Plan = typeof VALID_PLANS[number];
+
 // POST /subscriptions/verify
 router.post("/subscriptions/verify", requireAuth, async (req: any, res): Promise<void> => {
-  const { encodedData, plan } = req.body as { encodedData: string; plan: string };
+  const { encodedData, plan } = req.body as { encodedData?: string; plan?: string };
 
   if (!encodedData || !plan) {
     res.status(400).json({ error: "Missing encodedData or plan" });
     return;
   }
+
+  // Validate plan is a known value — reject anything else
+  if (!VALID_PLANS.includes(plan as Plan)) {
+    res.status(400).json({ error: "Invalid plan — must be 'monthly' or 'yearly'" });
+    return;
+  }
+  const validatedPlan = plan as Plan;
 
   let decoded: any;
   try {
@@ -103,6 +116,15 @@ router.post("/subscriptions/verify", requireAuth, async (req: any, res): Promise
 
   if (status !== "COMPLETE") {
     res.status(400).json({ error: "Payment was not completed" });
+    return;
+  }
+
+  // Cross-check the amount in the eSewa payload against the expected plan price.
+  // Prevents a user from paying for monthly and claiming a yearly subscription.
+  const expectedAmount = validatedPlan === "yearly" ? YEARLY_PRICE : MONTHLY_PRICE;
+  if (Number(total_amount) !== expectedAmount) {
+    logger.warn({ total_amount, expected: expectedAmount, plan: validatedPlan }, "eSewa amount mismatch — possible plan tampering");
+    res.status(400).json({ error: "Payment amount does not match plan price" });
     return;
   }
 
@@ -122,7 +144,7 @@ router.post("/subscriptions/verify", requireAuth, async (req: any, res): Promise
 
     const now = new Date();
     const periodEnd =
-      plan === "yearly"
+      validatedPlan === "yearly"
         ? new Date(now.getFullYear() + 1, now.getMonth(), now.getDate())
         : new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
 
@@ -131,7 +153,7 @@ router.post("/subscriptions/verify", requireAuth, async (req: any, res): Promise
       userId: req.userId,
       esewaTransactionId: String(transaction_code),
       status: "active",
-      plan,
+      plan: validatedPlan,
       currentPeriodEnd: periodEnd,
       cancelAtPeriodEnd: false,
     };

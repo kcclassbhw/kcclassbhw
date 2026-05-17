@@ -1,5 +1,6 @@
 import express, { type Express } from "express";
 import cors from "cors";
+import helmet from "helmet";
 import pinoHttp from "pino-http";
 import { clerkMiddleware } from "@clerk/express";
 import { publishableKeyFromHost } from "@clerk/shared/keys";
@@ -32,6 +33,9 @@ app.use(
     },
   }),
 );
+
+// HTTP security headers — removes X-Powered-By, adds HSTS, X-Content-Type-Options, etc.
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 
 app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
 

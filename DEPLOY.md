@@ -120,6 +120,7 @@ Scroll down to **Environment Variables** and add each one:
 
 | Key | Value |
 |---|---|
+| `FRONTEND_URL` | `https://your-app.vercel.app` *(your Vercel URL — used for eSewa payment redirects)* |
 | `ESEWA_PRODUCT_CODE` | *(your eSewa merchant code)* |
 | `ESEWA_SECRET_KEY` | *(your eSewa secret key)* |
 | `ESEWA_MONTHLY_PRICE` | `299` *(or your price in NPR)* |
@@ -331,6 +332,7 @@ CLERK_PUBLISHABLE_KEY=pk_live_...
 CLERK_SECRET_KEY=sk_live_...
 CLERK_WEBHOOK_SECRET=whsec_...
 CORS_ORIGIN=https://your-app.vercel.app
+FRONTEND_URL=https://your-app.vercel.app
 ESEWA_PRODUCT_CODE=your_merchant_code
 ESEWA_SECRET_KEY=your_esewa_secret
 ESEWA_MONTHLY_PRICE=299
