@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import { Show, useClerk, useUser } from "@clerk/react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { useTheme } from "@/components/theme-provider";
-import { GraduationCap, LayoutDashboard, LogOut, Settings, ShieldCheck, Sun, Moon, Library, Menu, X } from "lucide-react";
+import { LayoutDashboard, LogOut, Settings, ShieldCheck, Sun, Moon, Library, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -105,10 +105,12 @@ function Navbar() {
         <div className="container mx-auto flex h-[64px] sm:h-[68px] items-center justify-between px-4 md:px-6 max-w-7xl">
 
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group shrink-0">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 text-white shadow-lg shadow-emerald-500/30 group-hover:shadow-emerald-500/50 transition-all group-hover:scale-105">
-              <GraduationCap className="h-5 w-5" />
-            </div>
+          <Link href="/" className="flex items-center gap-2 group shrink-0">
+            <img
+              src="/logo.png"
+              alt="KC Class BHW"
+              className="h-10 w-10 object-contain transition-transform group-hover:scale-105 drop-shadow-sm"
+            />
             <span className="font-display font-bold tracking-tight text-base sm:text-lg hidden sm:inline">KC Class BHW</span>
           </Link>
 

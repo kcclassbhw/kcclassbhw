@@ -354,9 +354,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4 md:px-6 max-w-6xl">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6 sm:gap-8 mb-8 sm:mb-10">
             <div className="flex items-center gap-2.5">
-              <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
-                <GraduationCap className="h-5 w-5" />
-              </div>
+              <img src="/logo.png" alt="KC Class BHW" className="h-11 w-11 object-contain drop-shadow-sm" />
               <span className="font-display font-bold text-xl">KC Class BHW</span>
             </div>
             <div className="flex gap-3">
