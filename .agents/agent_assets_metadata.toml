@@ -6,3 +6,9 @@ id = "T9VlB_CkvA-dx3IcQ23TR"
 uri = "file://DEPLOY.md"
 type = "text"
 title = "Deployment Guide — Render + Vercel"
+
+[[outputs]]
+id = "D6eBP5jUTy1C7i7J-idvF"
+uri = "file://SECURITY.md"
+type = "text"
+title = "Security & Policy — KC Class BHW"
