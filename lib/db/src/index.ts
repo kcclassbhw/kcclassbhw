@@ -23,14 +23,13 @@ if (!process.env.DATABASE_URL) {
 
 const connectionString = process.env.DATABASE_URL;
 
-// Neon (and other hosted PostgreSQL providers) require TLS.
-// pg supports ?sslmode=require in the URL, but on Windows the native TLS
-// stack can reject Neon's cert with "SSL SYSCALL error: EOF detected" or
-// "unable to get local issuer certificate". Adding rejectUnauthorized: false
-// is safe here — Neon uses a valid CA-signed cert, this only bypasses the
-// Windows root-store lookup that occasionally fails.
+// Neon requires TLS. In production (Render/Linux) the system root-store validates
+// Neon's CA-signed cert correctly — use strict verification.
+// In development (Windows) the native TLS stack sometimes rejects the cert with
+// "SSL SYSCALL error: EOF detected" or "unable to get local issuer certificate",
+// so we relax verification only there.
 const ssl = connectionString.includes("neon.tech")
-  ? { ssl: { rejectUnauthorized: false } }
+  ? { ssl: { rejectUnauthorized: process.env.NODE_ENV === "production" } }
   : {};
 
 export const pool = new Pool({ connectionString, ...ssl });

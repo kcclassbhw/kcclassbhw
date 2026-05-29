@@ -74,3 +74,17 @@ overrides:
   # this overrides it to a safe version.
   "@esbuild-kit/esm-loader": "npm:tsx@^4.21.0"
   esbuild: "0.27.3"
+
+  # ── Security overrides ────────────────────────────────────────────────────
+  # path-to-regexp <8.4.0: ReDoS via sequential optional groups (GHSA-j3q9-mxjg-w52f)
+  # and multiple wildcards (GHSA-27v5-c462-wpq7). Used by Express 5 routing.
+  path-to-regexp: ">=8.4.0"
+
+  # fast-uri <3.1.2: path traversal via percent-encoded dot segments
+  # (GHSA-q3j6-qgpj-74h6) and host confusion via encoded authority delimiters
+  # (GHSA-v39h-62p7-jpjc).
+  fast-uri: ">=3.1.2"
+
+  # qs <6.15.2: DoS — stringify crashes with TypeError on null/undefined
+  # entries in comma-format arrays when encodeValuesOnly is set (GHSA-q8mj-m7cp-5q26).
+  qs: ">=6.15.2"
