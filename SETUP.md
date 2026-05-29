@@ -30,7 +30,7 @@ Must print `v22.x.x` or higher. If not installed: https://nodejs.org → downloa
 ```powershell
 pnpm --version
 ```
-Must print `9.x.x` or higher (10.x and 11.x also work). If not installed:
+Must print `10.x.x` or higher. If not installed:
 ```powershell
 npm install -g pnpm
 ```
@@ -103,6 +103,8 @@ artifacts\
     .env          ← server config (you just created this)
     .env.example  ← template (leave it as-is)
 ```
+
+> **Next:** Both `.env` files still have placeholder values — `REPLACE_ME` and `REPLACE_WITH_YOUR_CONNECTION_STRING`. Steps 4 and 5 walk you through filling them in. **Do not start the servers until all placeholders are replaced.**
 
 ---
 
@@ -426,9 +428,13 @@ KC-Class\
 │   ├── api-zod\             Auto-generated Zod validation schemas
 │   └── api-client-react\    Auto-generated React Query hooks
 ├── scripts\                 Utility scripts
-├── SETUP.md                 This file
-├── LAUNCH_GUIDE.md          How to go live with eSewa payments
-└── README.md                Full technical reference
+├── vercel.json              Vercel SPA routing (all paths → index.html)
+├── netlify.toml             Netlify build config and SPA routing
+├── REQUIREMENTS.md          Accounts, tools, and env vars needed before starting
+├── SETUP.md                 This file — local Windows development
+├── DEPLOY.md                Render + Vercel/Netlify deployment guide
+├── LAUNCH_GUIDE.md          Post-deploy: eSewa payments, admin, content
+└── README.md                Full technical reference and API docs
 ```
 
 ---

@@ -19,11 +19,11 @@
     "dotenv": "^17.4.2",
     "drizzle-orm": "catalog:",
     "express": "^5",
+    "express-rate-limit": "^8.5.2",
     "helmet": "^8.1.0",
     "http-proxy-middleware": "^4.0.0",
     "pino": "^9",
     "pino-http": "^10",
-    "stripe": "^22.1.1",
     "svix": "^1.93.0"
   },
   "devDependencies": {

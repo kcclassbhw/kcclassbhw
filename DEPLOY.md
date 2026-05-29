@@ -211,6 +211,8 @@ Click **Deploy**. The build takes 1–2 minutes. When done, Vercel gives you a U
 https://kc-class.vercel.app
 ```
 
+> **SPA routing is handled automatically.** The repository includes a `vercel.json` that redirects all paths to `index.html`, so refreshing on `/courses` or any deep link works correctly.
+
 **Continue to Part 4** with this URL.
 
 ---

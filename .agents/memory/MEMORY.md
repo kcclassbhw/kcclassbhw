@@ -1,0 +1,4 @@
+- [Drizzle Windows SSL](drizzle-windows-ssl.md) — Neon connections on Windows need `ssl: { rejectUnauthorized: false }` in Pool config; already applied in lib/db/src/index.ts
+- [Production grade checklist](production-grade.md) — Rate limiting (express-rate-limit), graceful shutdown (SIGTERM/SIGINT), trust proxy, vercel.json SPA routing — all applied
+- [Clerk proxy local dev](clerk-proxy-local.md) — Never set VITE_CLERK_PROXY_URL with pk_test_ keys; proxy only works in production with pk_live_ keys
+- [eSewa payment security](esewa-security.md) — Plan validated server-side; amount cross-checked against plan price; FRONTEND_URL env var used (not Origin header) for redirect URLs
