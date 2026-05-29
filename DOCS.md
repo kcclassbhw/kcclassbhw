@@ -73,7 +73,6 @@ KC-Class/
 │   └── api-client-react/    Auto-generated React Query hooks
 ├── scripts/                 Utility scripts
 ├── vercel.json              Vercel SPA routing config
-├── netlify.toml             Netlify build config
 └── DOCS.md                  This file
 ```
 
@@ -132,12 +131,10 @@ Runs the Express backend in the cloud.
 
 > **Free tier note:** The free plan sleeps after 15 minutes of inactivity. The first request after sleep takes ~30 seconds. For always-on service, upgrade to the paid plan ($7/month).
 
-#### Vercel — Frontend hosting (or Netlify, your choice)
+#### Vercel — Frontend hosting
 Hosts the React frontend. Builds and deploys automatically on every git push.
 - https://vercel.com → **Sign Up** → sign up with GitHub
 - No further setup needed now
-
-**Alternative:** If you prefer Netlify, use https://netlify.com instead. The repo includes `netlify.toml` so no manual build config is needed. You only need one of Vercel or Netlify — not both.
 
 #### eSewa merchant account — for live payments only
 Not needed for local development. The platform runs in eSewa sandbox (test) mode by default.
@@ -333,7 +330,7 @@ Part B — Push database schema to Neon
     ↓
 Part C — Deploy API server on Render
     ↓
-Part D — Deploy frontend on Vercel (or Netlify)
+Part D — Deploy frontend on Vercel
     ↓
 Part E — Finish Render config (CORS + Clerk webhook)
     ↓
@@ -419,8 +416,6 @@ Should return: `{"status":"ok"}`
 
 ### Part D — Deploy frontend on Vercel
 
-#### Option 1 — Vercel (recommended)
-
 1. Go to https://vercel.com → **Add New Project** → **Import Git Repository** → select **KC-Class**
 2. Configure:
 
@@ -445,21 +440,7 @@ Should return: `{"status":"ok"}`
 
 > SPA routing works automatically — the repo includes `vercel.json` that redirects all paths to `index.html` so refreshing on `/courses` or any deep link works correctly.
 
-#### Option 2 — Netlify
-
-1. Go to https://netlify.com → **Add new site** → **Import an existing project** → GitHub → select **KC-Class**
-2. Configure:
-
-| Field | Value |
-|---|---|
-| **Base directory** | `artifacts/learn` |
-| **Build command** | `cd ../.. && pnpm install --frozen-lockfile && pnpm --filter @workspace/learn run build` |
-| **Publish directory** | `dist/public` |
-
-3. Click **Environment variables** and add the same three variables as Vercel above
-4. Click **Deploy site**
-
-Copy your live frontend URL (`https://kc-class.netlify.app` or similar).
+Copy this URL — you need it in Part E.
 
 ### Part E — Finish Render config
 
@@ -620,7 +601,7 @@ Push to the `main` branch on GitHub:
 | Service | What happens automatically |
 |---|---|
 | Render | Rebuilds and redeploys the API (~3 minutes) |
-| Vercel/Netlify | Rebuilds and redeploys the frontend (~1 minute) |
+| Vercel | Rebuilds and redeploys the frontend (~1 minute) |
 
 No manual steps needed.
 
@@ -659,8 +640,8 @@ pnpm --filter @workspace/db run push
 | `CLERK_PUBLISHABLE_KEY` | Always | — | `pk_test_...` locally, `pk_live_...` on Render |
 | `CLERK_SECRET_KEY` | Always | — | `sk_test_...` locally, `sk_live_...` on Render |
 | `CLERK_WEBHOOK_SECRET` | Production | — | `whsec_...` — enables instant user sync on sign-up |
-| `CORS_ORIGIN` | Production | All origins | Your Vercel/Netlify URL — locks down CORS in production |
-| `FRONTEND_URL` | Production | `http://localhost:3000` | Your Vercel/Netlify URL — used for eSewa payment redirects |
+| `CORS_ORIGIN` | Production | All origins | Your Vercel URL — locks down CORS in production |
+| `FRONTEND_URL` | Production | `http://localhost:3000` | Your Vercel URL — used for eSewa payment redirects |
 | `ESEWA_PRODUCT_CODE` | Live payments | `EPAYTEST` | Your eSewa merchant code |
 | `ESEWA_SECRET_KEY` | Live payments | eSewa test key | Your eSewa HMAC secret key |
 | `ESEWA_MONTHLY_PRICE` | Optional | `299` | Monthly subscription price in NPR |
@@ -673,7 +654,7 @@ pnpm --filter @workspace/db run push
 |---|---|---|
 | `VITE_CLERK_PUBLISHABLE_KEY` | Always | Same value as `CLERK_PUBLISHABLE_KEY` on the API server |
 | `VITE_API_URL` | Always | `http://localhost:8080` locally; your Render URL in production |
-| `PORT` | Always | `3000` locally; ignored by Vercel/Netlify in production |
+| `PORT` | Always | `3000` locally; ignored by Vercel in production |
 | `BASE_PATH` | Always | Always `/` |
 
 ### Admin panel URLs

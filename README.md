@@ -89,7 +89,6 @@ KC-Class/
 ├── scripts/                          # Utility scripts
 ├── .vscode/                          # VSCode tasks, extensions, settings
 ├── vercel.json                       # Vercel SPA routing (all paths → index.html)
-├── netlify.toml                      # Netlify build config and SPA routing
 ├── DOCS.md                           # Complete guide: setup, deploy, go live
 └── README.md                         # This file — technical reference
 ```
