@@ -6,15 +6,7 @@ A subscription-based B.Ed English learning platform. Students browse free course
 
 ## Documentation
 
-| Document | What it covers |
-|---|---|
-| **[REQUIREMENTS.md](./REQUIREMENTS.md)** | Everything you need before starting — tools, accounts, env vars |
-| **[SETUP.md](./SETUP.md)** | Local development setup on Windows 11 (step-by-step) |
-| **[DEPLOY.md](./DEPLOY.md)** | Deploy to Render (API) + Vercel or Netlify (frontend) with Neon (database) |
-| **[LAUNCH_GUIDE.md](./LAUNCH_GUIDE.md)** | Post-deploy: admin setup, eSewa live payments, adding content |
-
-**Recommended reading order for a new developer:**
-`REQUIREMENTS.md` → `SETUP.md` → `DEPLOY.md` → `LAUNCH_GUIDE.md`
+**[DOCS.md](./DOCS.md)** — The complete guide: requirements, local setup (Windows 11), deployment to Render + Vercel + Neon, going live with eSewa payments, and troubleshooting. Start there.
 
 ---
 
@@ -96,11 +88,10 @@ KC-Class/
 │   └── db/src/schema/               # Drizzle ORM schema (users, courses, lessons, etc.)
 ├── scripts/                          # Utility scripts
 ├── .vscode/                          # VSCode tasks, extensions, settings
-├── netlify.toml                      # Netlify build config (SPA redirect rules included)
-├── REQUIREMENTS.md                   # All prerequisites and accounts needed
-├── SETUP.md                          # Local development setup
-├── DEPLOY.md                         # Render + Vercel/Netlify deployment
-└── LAUNCH_GUIDE.md                   # Post-deploy launch steps
+├── vercel.json                       # Vercel SPA routing (all paths → index.html)
+├── netlify.toml                      # Netlify build config and SPA routing
+├── DOCS.md                           # Complete guide: setup, deploy, go live
+└── README.md                         # This file — technical reference
 ```
 
 ---
@@ -158,7 +149,7 @@ User data flows from Clerk to the database via two mechanisms:
 | **Clerk Webhook** (`POST /api/webhooks/clerk`) | Instantly on `user.created`, `user.updated`, `user.deleted` events | Upserts full user profile (email, name, avatar) into the `users` table |
 | **`ensureUser` middleware** | On first authenticated API request | Fallback — fetches from Clerk API and creates the DB row if the webhook hasn't fired yet |
 
-Setup required for webhooks: see `DEPLOY.md → Part 2.6`.
+Setup required for webhooks: see `DOCS.md → Part 4, Part E`.
 
 ---
 

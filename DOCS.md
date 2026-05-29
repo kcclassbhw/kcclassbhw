@@ -780,4 +780,3 @@ The `/videos` page reads your YouTube channel's RSS feed. Make sure your YouTube
 
 ---
 
-*For the original individual doc files, see: `REQUIREMENTS.md`, `SETUP.md`, `DEPLOY.md`, `LAUNCH_GUIDE.md`.*
