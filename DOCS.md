@@ -64,6 +64,7 @@ KC-Class/
 │   └── learn/               React frontend (Vite, port 3000)
 │       ├── src/pages/       All page components
 │       ├── src/components/  Shared UI components
+│       ├── vercel.json      Vercel SPA routing (all paths → index.html)
 │       ├── .env             Your local frontend config  ← YOU CREATE THIS
 │       └── .env.example     Template to copy from
 ├── lib/
@@ -72,7 +73,6 @@ KC-Class/
 │   ├── api-zod/             Auto-generated Zod validation schemas
 │   └── api-client-react/    Auto-generated React Query hooks
 ├── scripts/                 Utility scripts
-├── vercel.json              Vercel SPA routing config
 └── DOCS.md                  This file
 ```
 
@@ -389,15 +389,21 @@ Click **Environment** (or **Advanced**) and add every variable in this table:
 | Variable | Value |
 |---|---|
 | `NODE_ENV` | `production` |
+| `PNPM_VERSION` | `10.26.1` |
 | `DATABASE_URL` | Your Neon connection string |
 | `CLERK_PUBLISHABLE_KEY` | `pk_live_...` (production key from Part A) |
 | `CLERK_SECRET_KEY` | `sk_live_...` (production key from Part A) |
 | `CLERK_WEBHOOK_SECRET` | `whsec_...` (from Part A — add after webhook is created) |
 | `CORS_ORIGIN` | *(leave blank for now — you'll add this after Part D)* |
 | `FRONTEND_URL` | *(leave blank for now — you'll add this after Part D)* |
+| `YOUTUBE_CHANNEL_ID` | Your YouTube channel ID (starts with `UC...`) |
 | `ESEWA_MONTHLY_PRICE` | `299` |
 | `ESEWA_YEARLY_PRICE` | `2399` |
 
+> **`PNPM_VERSION`** — This workspace requires pnpm 10+. Setting this env var tells Render which version to install before running the build command.
+>
+> **`YOUTUBE_CHANNEL_ID`** — Find yours in YouTube Studio → Customisation → Basic info → Channel URL. It's the part after `/channel/` and starts with `UC`. Without this, the `/videos` page shows the default KC Class BHW channel.
+>
 > `ESEWA_PRODUCT_CODE`, `ESEWA_SECRET_KEY`, and `ESEWA_ENV` are only needed when you enable real eSewa payments. Leave them out now — the platform defaults to sandbox (test) mode.
 
 Click **Create Web Service**. The first build takes 3–5 minutes. When done, you will see:
@@ -438,7 +444,7 @@ Should return: `{"status":"ok"}`
 4. Click **Deploy**. Build takes 1–2 minutes.
 5. Your frontend is live at: `https://kc-class.vercel.app` (or similar)
 
-> SPA routing works automatically — the repo includes `vercel.json` that redirects all paths to `index.html` so refreshing on `/courses` or any deep link works correctly.
+> SPA routing works automatically — `artifacts/learn/vercel.json` is picked up by Vercel from the Root Directory and redirects all paths to `index.html`, so refreshing on `/courses` or any deep link works correctly.
 
 Copy this URL — you need it in Part E.
 

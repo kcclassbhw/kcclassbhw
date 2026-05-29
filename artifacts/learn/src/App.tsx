@@ -71,7 +71,7 @@ if (!clerkPubKey) {
           <li>Replace <code>pk_test_REPLACE_ME</code> with your actual key</li>
           <li>Save and restart the dev server (<code>Ctrl+C</code> then <code>pnpm --filter @workspace/learn run dev</code>)</li>
         </ol>
-        <p style="margin-top:1rem;color:#6b7280">See <strong>SETUP.md</strong> in the project root for the full walkthrough.</p>
+        <p style="margin-top:1rem;color:#6b7280">See <strong>DOCS.md</strong> in the project root for the full walkthrough.</p>
       </div>`;
   }
   throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY — see the setup screen in your browser');

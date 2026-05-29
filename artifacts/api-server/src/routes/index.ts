@@ -9,12 +9,19 @@ import dashboardRouter from "./dashboard";
 import adminRouter from "./admin";
 import videosRouter from "./videos";
 import webhooksRouter from "./webhooks";
+import { ensureUser } from "./auth";
 
 const router: IRouter = Router();
 
 router.get("/healthz", (_req, res) => {
   res.json(HealthCheckResponse.parse({ status: "ok" }));
 });
+
+// Ensure every signed-in user has a row in the database.
+// No-ops immediately for unauthenticated requests (public routes are unaffected).
+// This is the fallback for when the Clerk webhook hasn't fired yet (e.g. local
+// dev without a webhook configured, or the very first request after signup).
+router.use(ensureUser);
 
 router.use(coursesRouter);
 router.use(lessonsRouter);

@@ -48,6 +48,7 @@ A subscription-based B.Ed English learning platform. Students browse free course
 KC-Class/
 ├── artifacts/
 │   ├── learn/                        # React frontend (Vite)
+│   │   ├── vercel.json               # Vercel SPA routing (all paths → index.html)
 │   │   └── src/
 │   │       ├── pages/                # Page components
 │   │       │   ├── home.tsx          # Landing page
@@ -75,7 +76,7 @@ KC-Class/
 │           │   ├── progress.ts       # Lesson completion tracking
 │           │   ├── dashboard.ts      # Dashboard summary
 │           │   ├── admin.ts          # Admin stats + user management + /users/me
-│           │   ├── videos.ts         # YouTube RSS feed
+│           │   ├── videos.ts         # YouTube RSS feed (YOUTUBE_CHANNEL_ID env var)
 │           │   └── webhooks.ts       # Clerk webhook handler (user sync)
 │           ├── middlewares/
 │           │   └── clerkProxyMiddleware.ts
@@ -88,7 +89,6 @@ KC-Class/
 │   └── db/src/schema/               # Drizzle ORM schema (users, courses, lessons, etc.)
 ├── scripts/                          # Utility scripts
 ├── .vscode/                          # VSCode tasks, extensions, settings
-├── vercel.json                       # Vercel SPA routing (all paths → index.html)
 ├── DOCS.md                           # Complete guide: setup, deploy, go live
 └── README.md                         # This file — technical reference
 ```

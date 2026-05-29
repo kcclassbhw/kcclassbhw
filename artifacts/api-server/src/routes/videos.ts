@@ -2,7 +2,10 @@ import { Router, type IRouter } from "express";
 
 const router: IRouter = Router();
 
-const CHANNEL_ID = "UC77kf2jXTQvRl2vV3CI8oRA";
+// Set YOUTUBE_CHANNEL_ID in your Render environment variables to point at your channel.
+// Default is the KC Class BHW channel. Get your channel ID from:
+// YouTube Studio → Customisation → Basic info → Channel URL (the ID after /channel/)
+const CHANNEL_ID = process.env.YOUTUBE_CHANNEL_ID || "UC77kf2jXTQvRl2vV3CI8oRA";
 const RSS_URL = `https://www.youtube.com/feeds/videos.xml?channel_id=${CHANNEL_ID}`;
 
 // Simple XML field extractor
