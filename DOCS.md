@@ -1,157 +1,86 @@
-# KC Class BHW — Complete Documentation
+# KC Class BHW — Setup & Deployment Guide
 
-**KC Class BHW** is a subscription-based B.Ed English learning platform for Nepal. YouTube creators sell premium courses, lessons, PDF notes, and downloadable resources to students via monthly or yearly eSewa subscriptions.
+A subscription-based B.Ed English learning platform. Students pay via eSewa (monthly NPR 299 / yearly NPR 2,399) to access all lessons, PDF notes, and downloadable resources.
 
-This document covers everything from first setup to going live with real payments. Work through the sections in order.
+---
+
+## ⚡ Quick Start (Local — 5 Steps)
+
+```powershell
+# 1. Install all dependencies (one time only)
+pnpm install
+
+# 2. Create your .env files
+copy artifacts\learn\.env.example       artifacts\learn\.env
+copy artifacts\api-server\.env.example  artifacts\api-server\.env
+# → Open both files and fill in the keys (see Section 2 below)
+
+# 3. Push the database tables to Neon
+pnpm --filter @workspace/db run push
+
+# 4. Start both servers
+# VSCode: Ctrl+Shift+P → "Tasks: Run Task" → "Start Both (Full Stack)"
+# Or two terminals:
+pnpm --filter @workspace/api-server run dev   # Terminal 1 — API on port 8080
+pnpm --filter @workspace/learn run dev         # Terminal 2 — App on port 3000
+
+# 5. Open in browser
+start http://localhost:3000
+```
 
 ---
 
 ## Table of Contents
 
-1. [What You're Building](#1-what-youre-building)
-2. [Before You Start — Tools and Accounts](#2-before-you-start--tools-and-accounts)
-3. [Local Development (Windows 11)](#3-local-development-windows-11)
+1. [What You Need](#1-what-you-need)
+2. [Local Setup](#2-local-setup)
+3. [Test Locally — What to Verify](#3-test-locally--what-to-verify)
 4. [Deploy to Production](#4-deploy-to-production)
-5. [Go Live — Payments, Admin, Content](#5-go-live--payments-admin-content)
-6. [Daily Workflow](#6-daily-workflow)
-7. [Reference](#7-reference)
+5. [After Deployment](#5-after-deployment)
+6. [Daily Operations](#6-daily-operations)
+7. [Environment Variable Reference](#7-environment-variable-reference)
 8. [Troubleshooting](#8-troubleshooting)
 
 ---
 
-## 1. What You're Building
+## 1. What You Need
 
-### How it works for students
+### On your machine
 
-| Page | Who can access |
-|---|---|
-| Landing page, course catalog, pricing | Everyone (no account needed) |
-| 1–2 free preview lessons per course | Everyone |
-| All full lessons | Signed-in students with an active subscription |
-| PDF notes and resource vault | Subscribers only |
-| Progress tracking, dashboard | Signed-in students |
-
-### How it works for you (the admin)
-
-- Students sign up with Clerk (Google login or email/password)
-- They subscribe by paying via eSewa (Nepal's leading digital wallet)
-- You manage courses, lessons, and resources at `/admin`
-- New YouTube videos appear on the `/videos` page automatically
-
-### Tech stack
-
-| Layer | Technology |
-|---|---|
-| Frontend | React 19 + Vite 7 + Tailwind CSS v4 + shadcn/ui |
-| Routing | wouter |
-| Backend | Express 5 + Node.js 22 |
-| Database | PostgreSQL 15 via Neon (cloud-hosted) |
-| ORM | Drizzle ORM |
-| Authentication | Clerk |
-| Payments | eSewa v2 |
-| Language | TypeScript 5.9 |
-| Monorepo | pnpm workspaces |
-
-### Project structure
-
-```
-KC-Class/
-├── artifacts/
-│   ├── api-server/          Express API server (port 8080)
-│   │   ├── src/routes/      Route handlers (courses, subscriptions, etc.)
-│   │   ├── .env             Your local server config  ← YOU CREATE THIS
-│   │   └── .env.example     Template to copy from
-│   └── learn/               React frontend (Vite, port 3000)
-│       ├── src/pages/       All page components
-│       ├── src/components/  Shared UI components
-│       ├── vercel.json      Vercel SPA routing (all paths → index.html)
-│       ├── .env             Your local frontend config  ← YOU CREATE THIS
-│       └── .env.example     Template to copy from
-├── lib/
-│   ├── db/                  PostgreSQL schema (Drizzle ORM)
-│   ├── api-spec/            OpenAPI spec — source of truth for the API
-│   ├── api-zod/             Auto-generated Zod validation schemas
-│   └── api-client-react/    Auto-generated React Query hooks
-├── scripts/                 Utility scripts
-└── DOCS.md                  This file
-```
-
----
-
-## 2. Before You Start — Tools and Accounts
-
-### 2.1 Tools to install on your machine
-
-| Tool | Minimum version | How to check | Install |
+| Tool | Version | Check | Install |
 |---|---|---|---|
-| **Node.js** | 22.x LTS | `node --version` | https://nodejs.org → download LTS |
-| **pnpm** | 10.x | `pnpm --version` | `npm install -g pnpm` |
-| **Git** | Any | `git --version` | https://git-scm.com/downloads |
+| **Node.js** | 22 LTS | `node --version` | https://nodejs.org → LTS |
+| **pnpm** | 10+ | `pnpm --version` | `npm install -g pnpm` |
+| **Git** | Any | `git --version` | https://git-scm.com |
 | **VSCode** | Any | — | https://code.visualstudio.com |
 
-After installing pnpm, **close and reopen** your terminal so it is on the PATH.
+After installing pnpm, **close and reopen your terminal** so it is on the PATH.
 
-When you open the project in VSCode, it will offer to install recommended extensions — click **Install All**. This adds Tailwind autocomplete, Prettier, ESLint, SQLTools, and GitLens.
+### Accounts to create (all free)
 
-### 2.2 Accounts to create (all free)
+| Service | Purpose | Sign up |
+|---|---|---|
+| **Clerk** | User authentication (sign-up, login, Google) | https://dashboard.clerk.com |
+| **Neon** | Cloud PostgreSQL database | https://neon.tech |
+| **Render** | Hosts the API server | https://render.com |
+| **Vercel** | Hosts the React frontend | https://vercel.com |
 
-#### GitHub
-Host the code. Render and Vercel connect to GitHub to deploy automatically.
-- https://github.com → **Sign up** → fork or push the KC-Class repo to your account
+eSewa merchant account is only needed for real payments — sandbox works without it.
 
-#### Clerk — User authentication
-Handles sign-up, sign-in, and social login. No sessions or passwords to manage.
+### Keys you need before starting
 
-1. Go to https://dashboard.clerk.com → **Sign up**
-2. **Create application** → name it `KC Class BHW` → **Create**
-3. Click **API Keys** in the sidebar
-4. Copy and save both keys — you will need them later:
-   - **Publishable key** — starts with `pk_test_...`
-   - **Secret key** — starts with `sk_test_...`
+**From Clerk** (`dashboard.clerk.com` → API Keys):
+- Publishable key — starts with `pk_test_...`
+- Secret key — starts with `sk_test_...`
 
-> **Development vs production keys:** Use `pk_test_` / `sk_test_` for local development. Before deploying to production, switch to `pk_live_` / `sk_live_` by toggling **Development → Production** at the top of the API Keys page in the Clerk dashboard.
-
-#### Neon — PostgreSQL database
-Cloud PostgreSQL — no local database to install.
-
-1. Go to https://neon.tech → **Sign up** (free, no credit card)
-2. Click **New Project** → name it `kc-class` → region: **Singapore** (closest to Nepal) → **Create**
-3. Click **Connect** → copy the **Connection String**:
-   ```
-   postgresql://user:password@ep-xxx.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
-   ```
-4. Save this string — it is your `DATABASE_URL`
-
-> **One database for everything:** Use the same Neon connection string for both local development and production. You do not need two separate databases.
-
-#### Render — API server hosting
-Runs the Express backend in the cloud.
-- https://render.com → **Get Started** → sign up with GitHub
-- No further setup needed now — you configure a service during deployment (Part 4)
-
-> **Free tier note:** The free plan sleeps after 15 minutes of inactivity. The first request after sleep takes ~30 seconds. For always-on service, upgrade to the paid plan ($7/month).
-
-#### Vercel — Frontend hosting
-Hosts the React frontend. Builds and deploys automatically on every git push.
-- https://vercel.com → **Sign Up** → sign up with GitHub
-- No further setup needed now
-
-#### eSewa merchant account — for live payments only
-Not needed for local development. The platform runs in eSewa sandbox (test) mode by default.
-
-When you are ready to accept real NPR payments:
-- Apply at https://esewa.com.np/epay/merchant
-- eSewa will give you a **Merchant Code** and a **Secret Key**
+**From Neon** (`neon.tech` → your project → Connect):
+- Connection string — looks like `postgresql://user:pass@ep-xxx.neon.tech/neondb?sslmode=require`
 
 ---
 
-## 3. Local Development (Windows 11)
-
-**Time to complete:** 20–30 minutes on first setup.
+## 2. Local Setup
 
 ### Step 1 — Clone the repository
-
-Open PowerShell or Windows Terminal:
 
 ```powershell
 git clone https://github.com/YOUR-USERNAME/KC-Class.git
@@ -159,34 +88,26 @@ cd KC-Class
 code .
 ```
 
-When VSCode opens, click **Install All** when prompted to install recommended extensions.
+When VSCode opens, click **Install All** when prompted to install recommended extensions (Tailwind, Prettier, SQLTools, etc.).
 
 ### Step 2 — Install dependencies
-
-In the VSCode integrated terminal (`Ctrl+` `` ` ``):
 
 ```powershell
 pnpm install
 ```
 
-This installs all packages for the frontend, API server, database layer, and shared libraries in one command. Expect 1–3 minutes on first run.
+Installs everything in one command (~1–3 minutes on first run).
 
-### Step 3 — Create environment files
-
-Copy both template files:
+### Step 3 — Create the environment files
 
 ```powershell
 copy artifacts\learn\.env.example       artifacts\learn\.env
 copy artifacts\api-server\.env.example  artifacts\api-server\.env
 ```
 
-Or in File Explorer: right-click each `.env.example` → Copy → Paste in the same folder → rename to `.env`.
+### Step 4 — Fill in `artifacts\learn\.env`
 
-> **Important:** Both files still have placeholder values. Steps 4 and 5 walk you through filling them in. Do not start the servers until all placeholders are replaced.
-
-### Step 4 — Fill in the frontend env file
-
-Open `artifacts\learn\.env` in VSCode and fill it in:
+Open the file and replace the placeholders:
 
 ```env
 VITE_CLERK_PUBLISHABLE_KEY=pk_test_PASTE_YOUR_KEY_HERE
@@ -195,50 +116,34 @@ PORT=3000
 BASE_PATH=/
 ```
 
-- `VITE_CLERK_PUBLISHABLE_KEY` — the **Publishable key** you copied from the Clerk dashboard (step 2.2)
-- `VITE_API_URL` — leave as `http://localhost:8080` for local dev
-- `PORT` — leave as `3000`
-- `BASE_PATH` — leave as `/`
+> **Do NOT add `VITE_CLERK_PROXY_URL`** — this crashes the app in local dev.
 
-> **Do not add `VITE_CLERK_PROXY_URL`** in local development. This setting only works with production Clerk keys on a custom domain. Adding it with development keys crashes the app with "Failed to load Clerk JS".
+### Step 5 — Fill in `artifacts\api-server\.env`
 
-### Step 5 — Fill in the API server env file
-
-Open `artifacts\api-server\.env` in VSCode and fill it in:
+Open the file and replace the placeholders:
 
 ```env
 PORT=8080
 NODE_ENV=development
-DATABASE_URL=postgresql://user:password@ep-xxx.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
+DATABASE_URL=postgresql://user:password@ep-xxx.neon.tech/neondb?sslmode=require
 CLERK_PUBLISHABLE_KEY=pk_test_PASTE_YOUR_KEY_HERE
-CLERK_SECRET_KEY=sk_test_PASTE_YOUR_SECRET_KEY_HERE
+CLERK_SECRET_KEY=sk_test_PASTE_YOUR_SECRET_HERE
 ```
 
-- `DATABASE_URL` — the Neon connection string you copied in section 2.2
-- `CLERK_PUBLISHABLE_KEY` — **same value** as in the frontend `.env`
-- `CLERK_SECRET_KEY` — the **Secret key** from the Clerk dashboard
+Both `.env` files must have the **same** `pk_test_...` publishable key.
 
-The remaining variables (`CORS_ORIGIN`, `FRONTEND_URL`, `ESEWA_*`, `CLERK_WEBHOOK_SECRET`) are only needed for production and can be left out of your local `.env`.
+> Everything else (`CORS_ORIGIN`, `FRONTEND_URL`, `ESEWA_*`, `CLERK_WEBHOOK_SECRET`) is for production only — leave it commented out in local dev.
 
-### Step 6 — Create the database tables
+### Step 6 — Push the database schema
 
-Run this once to create all tables (users, courses, lessons, subscriptions, progress, resources, downloads):
+Creates all tables (users, courses, lessons, subscriptions, progress, resources, downloads):
 
 ```powershell
 pnpm --filter @workspace/db run push
 ```
 
-Drizzle reads your `DATABASE_URL` from `artifacts\api-server\.env`, connects to Neon, and creates the tables.
+If it hangs waiting for confirmation, type `y` and press Enter. Or use the no-prompt variant:
 
-**Expected output:**
-```
-[✓] Pulling schema from database...
-[✓] Changes applied
-```
-
-If Drizzle asks `? Do you want to apply the changes? › (y/N)` — type `y` and press Enter.
-
-If the interactive prompt hangs, use the force variant instead:
 ```powershell
 pnpm --filter @workspace/db run push-force
 ```
@@ -247,129 +152,110 @@ The database comes pre-seeded with 4 demo courses, 12 demo lessons, and 6 demo r
 
 ### Step 7 — Start the servers
 
-You need two servers running simultaneously — the API and the frontend.
-
 **Option A — One click (recommended):**
-- Press `Ctrl+Shift+P` → `Tasks: Run Task` → **Start Both (Full Stack)**
+- `Ctrl+Shift+P` → **Tasks: Run Task** → **Start Both (Full Stack)**
 
 **Option B — Two terminals:**
 
-Terminal 1 — API server:
 ```powershell
+# Terminal 1 — wait for: "Server listening" on port 8080
 pnpm --filter @workspace/api-server run dev
-```
-Wait for: `"msg":"Server listening","port":8080`
 
-Terminal 2 (click `+` to open a new terminal) — Frontend:
-```powershell
+# Terminal 2 — wait for: "Local: http://localhost:3000/"
 pnpm --filter @workspace/learn run dev
 ```
-Wait for: `➜  Local:   http://localhost:3000/`
 
-### Step 8 — Open the app
+### Step 8 — Make yourself admin
 
-Go to http://localhost:3000 in Chrome or Edge.
+After signing up on the site, promote your account to admin via the Neon SQL Editor:
 
-You should see the KC Class BHW landing page. Click **Sign Up** to create your first account using Clerk.
-
-### Step 9 — Make yourself admin
-
-After creating your account on the site, promote it to admin:
-
-**Using the Neon SQL Editor (simplest):**
-1. Go to https://neon.tech → open your project → **SQL Editor**
+1. Go to https://neon.tech → your project → **SQL Editor**
 2. Run:
-   ```sql
-   UPDATE users SET role = 'admin' WHERE email = 'your@email.com';
-   ```
-3. Refresh the page in your browser — the **Admin** link appears in the nav bar
 
-**Using VSCode SQLTools:**
-1. `Ctrl+Shift+P` → **SQLTools: New Connection** → PostgreSQL
-2. Enter your Neon connection details → **Test Connection** → **Save**
-3. Run:
-   ```sql
-   SELECT clerk_id, email, role FROM users;
-   -- Find your row, copy the clerk_id, then:
-   UPDATE users SET role = 'admin' WHERE clerk_id = 'user_PASTE_YOUR_ID_HERE';
-   ```
+```sql
+UPDATE users SET role = 'admin' WHERE email = 'your@email.com';
+```
 
-### Step 10 — Add your first course
+3. Refresh the page — the **Admin** link appears in the navigation bar.
 
-Go to http://localhost:3000/admin/courses → **New Course**:
+---
 
-- **Title** — e.g. `B.Ed English Grammar — Complete`
-- **Description** — what students will learn
-- **Category** — Grammar, Pedagogy, Phonetics, or Literature
-- **Thumbnail URL** — any direct image URL
-- **Published** — toggle on to make it visible
+## 3. Test Locally — What to Verify
 
-Then click **Manage Lessons** → **Add Lesson**:
+Work through this list before deploying. Each item confirms a different part of the platform.
 
-| Field | What to enter |
-|---|---|
-| Title | Lesson name |
-| YouTube Video ID | From `https://youtube.com/watch?v=`**`dQw4w9WgXcQ`** — the part after `?v=` |
-| Duration (minutes) | Shown in the lesson list |
-| Sort Order | 1 = first lesson, 2 = second, etc. |
-| Free Preview | Toggle on for 1–2 lessons so students can try before subscribing |
-| Published | Toggle on to make the lesson visible |
+### ✅ Basic app
 
-> **For premium lessons:** Set the YouTube video to **Unlisted** before copying the ID. Unlisted videos don't appear in YouTube search or on your channel — only your website has the link.
+- [ ] http://localhost:3000 loads the landing page
+- [ ] http://localhost:3000/courses shows the 4 demo courses
+- [ ] Clicking a course opens the course detail page with lessons listed
+- [ ] A free preview lesson plays (YouTube embed loads)
+
+### ✅ Authentication
+
+- [ ] **Sign Up** creates an account (Clerk modal opens)
+- [ ] After signing up, you are redirected to `/dashboard`
+- [ ] **Sign Out** works (header shows Sign In again)
+- [ ] **Sign In** with the same account works
+
+### ✅ API server
+
+- [ ] http://localhost:8080/api/healthz returns `{"status":"ok"}`
+- [ ] After signing in, http://localhost:3000/dashboard shows your stats
+
+### ✅ Admin panel
+
+- [ ] `/admin` is accessible after promoting yourself to admin (Step 8)
+- [ ] `/admin/courses` shows the demo courses
+- [ ] **New Course** → fill in the form → course appears in the list
+- [ ] **Manage Lessons** → **Add Lesson** → add a YouTube video ID → lesson appears
+
+### ✅ Subscription flow (sandbox eSewa)
+
+- [ ] `/pricing` shows the two subscription plans
+- [ ] **Pay Monthly** redirects to eSewa sandbox (`rc-epay.esewa.com.np`)
+- [ ] Log in with test credentials: ID `9806800001`, MPIN `1122`, Password `Nepal@123`
+- [ ] Complete payment → redirected back → `/dashboard` shows **Active Subscription**
+- [ ] A premium lesson now plays without restriction
+- [ ] `/resources` is accessible and shows downloadable files
+
+### ✅ Videos page
+
+- [ ] `/videos` loads and shows YouTube videos from the channel
+
+Once all boxes are ticked, you are ready to deploy.
 
 ---
 
 ## 4. Deploy to Production
 
-**Deploy in this order — each step depends on the previous one:**
+**Deploy in this exact order:**
 
 ```
-Part A — Switch Clerk to production keys
-    ↓
-Part B — Push database schema to Neon
-    ↓
-Part C — Deploy API server on Render
-    ↓
-Part D — Deploy frontend on Vercel
-    ↓
-Part E — Finish Render config (CORS + Clerk webhook)
-    ↓
-Part F — Verify everything works
+A → Get production Clerk keys
+B → Deploy API on Render
+C → Deploy frontend on Vercel
+D → Connect Render and Vercel
+E → Set up Clerk webhook
+F → Verify
 ```
 
-### Part A — Get production Clerk keys
+### Part A — Switch Clerk to production keys
 
-1. Go to https://dashboard.clerk.com → open your app
-2. Click **API Keys** → at the top, switch the toggle from **Development** to **Production**
-3. Copy and save:
-   - **Publishable key** — now starts with `pk_live_...`
-   - **Secret key** — now starts with `sk_live_...`
-4. In the Clerk sidebar, click **Webhooks** → **Add Endpoint**:
-   - URL: `https://YOUR-RENDER-URL.onrender.com/api/webhooks/clerk`
-   - Events: check `user.created`, `user.updated`, `user.deleted`
-   - Click **Create** → copy the **Signing Secret** (`whsec_...`) — you will need this in Part C
+1. https://dashboard.clerk.com → your app → **API Keys**
+2. Toggle **Development → Production** at the top of the page
+3. Copy and save your new keys:
+   - Publishable key — now starts with `pk_live_...`
+   - Secret key — now starts with `sk_live_...`
 
-> **Note:** You do not know the Render URL yet — you can come back and add the webhook endpoint after Part C if you prefer.
+> You will add the Clerk webhook after Part B when you have the Render URL.
 
-### Part B — Confirm the database schema is pushed
+### Part B — Deploy API server on Render
 
-If you already ran `pnpm --filter @workspace/db run push` during local setup (Step 6), the tables exist in Neon and you can skip this.
+1. https://render.com → **New +** → **Web Service**
+2. Connect GitHub → select your **KC-Class** repository → **Connect**
 
-If not, run it now (replace the URL with your real Neon connection string):
-
-```powershell
-$env:DATABASE_URL="postgresql://user:password@ep-xxx.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
-pnpm --filter @workspace/db run push
-```
-
-### Part C — Deploy API server on Render
-
-#### Create the Web Service
-
-1. Go to https://render.com → **New +** → **Web Service**
-2. Connect GitHub → select the **KC-Class** repository → **Connect**
-
-#### Configure the service
+#### Service settings
 
 | Field | Value |
 |---|---|
@@ -382,47 +268,36 @@ pnpm --filter @workspace/db run push
 | **Start Command** | `node --enable-source-maps ./artifacts/api-server/dist/index.mjs` |
 | **Instance Type** | Free |
 
-#### Add environment variables
+#### Environment variables to add now
 
-Click **Environment** (or **Advanced**) and add every variable in this table:
+Click **Environment** → add these:
 
 | Variable | Value |
 |---|---|
 | `NODE_ENV` | `production` |
 | `PNPM_VERSION` | `10.26.1` |
 | `DATABASE_URL` | Your Neon connection string |
-| `CLERK_PUBLISHABLE_KEY` | `pk_live_...` (production key from Part A) |
-| `CLERK_SECRET_KEY` | `sk_live_...` (production key from Part A) |
-| `CLERK_WEBHOOK_SECRET` | `whsec_...` (from Part A — add after webhook is created) |
-| `CORS_ORIGIN` | *(leave blank for now — you'll add this after Part D)* |
-| `FRONTEND_URL` | *(leave blank for now — you'll add this after Part D)* |
-| `YOUTUBE_CHANNEL_ID` | Your YouTube channel ID (starts with `UC...`) |
+| `CLERK_PUBLISHABLE_KEY` | `pk_live_...` from Part A |
+| `CLERK_SECRET_KEY` | `sk_live_...` from Part A |
 | `ESEWA_MONTHLY_PRICE` | `299` |
 | `ESEWA_YEARLY_PRICE` | `2399` |
+| `YOUTUBE_CHANNEL_ID` | Your YouTube channel ID (starts with `UC...`) |
 
-> **`PNPM_VERSION`** — This workspace requires pnpm 10+. Setting this env var tells Render which version to install before running the build command.
->
-> **`YOUTUBE_CHANNEL_ID`** — Find yours in YouTube Studio → Customisation → Basic info → Channel URL. It's the part after `/channel/` and starts with `UC`. Without this, the `/videos` page shows the default KC Class BHW channel.
->
-> `ESEWA_PRODUCT_CODE`, `ESEWA_SECRET_KEY`, and `ESEWA_ENV` are only needed when you enable real eSewa payments. Leave them out now — the platform defaults to sandbox (test) mode.
+> Leave `CORS_ORIGIN`, `FRONTEND_URL`, and `CLERK_WEBHOOK_SECRET` blank for now — you'll add them after Part C.
 
-Click **Create Web Service**. The first build takes 3–5 minutes. When done, you will see:
+Click **Create Web Service**. First build takes 3–5 minutes.
 
+**Confirm it's working:**
 ```
-Your service is live at: https://kc-class-api.onrender.com
+https://YOUR-RENDER-URL.onrender.com/api/healthz
 ```
+Must return `{"status":"ok"}` before continuing.
 
-Copy this URL — you need it in Part D.
+Copy your Render URL (e.g. `https://kc-class-api.onrender.com`) — you need it in Part C.
 
-**Verify it is running:**
-```
-https://kc-class-api.onrender.com/api/healthz
-```
-Should return: `{"status":"ok"}`
+### Part C — Deploy frontend on Vercel
 
-### Part D — Deploy frontend on Vercel
-
-1. Go to https://vercel.com → **Add New Project** → **Import Git Repository** → select **KC-Class**
+1. https://vercel.com → **Add New Project** → **Import Git Repository** → select **KC-Class**
 2. Configure:
 
 | Field | Value |
@@ -433,81 +308,85 @@ Should return: `{"status":"ok"}`
 | **Output Directory** | `dist/public` |
 | **Install Command** | `cd ../.. && pnpm install --frozen-lockfile` |
 
-3. Click **Environment Variables** and add:
+3. Click **Environment Variables** → add:
 
 | Variable | Value |
 |---|---|
-| `VITE_CLERK_PUBLISHABLE_KEY` | `pk_live_...` (production key from Part A) |
-| `VITE_API_URL` | `https://kc-class-api.onrender.com` (your Render URL from Part C) |
+| `VITE_CLERK_PUBLISHABLE_KEY` | `pk_live_...` from Part A |
+| `VITE_API_URL` | Your Render URL from Part B (e.g. `https://kc-class-api.onrender.com`) |
 | `BASE_PATH` | `/` |
 
 4. Click **Deploy**. Build takes 1–2 minutes.
-5. Your frontend is live at: `https://kc-class.vercel.app` (or similar)
+5. Your frontend URL is shown after deploy (e.g. `https://kc-class.vercel.app`)
 
-> SPA routing works automatically — `artifacts/learn/vercel.json` is picked up by Vercel from the Root Directory and redirects all paths to `index.html`, so refreshing on `/courses` or any deep link works correctly.
+Copy your Vercel URL — you need it in Part D.
 
-Copy this URL — you need it in Part E.
+> SPA routing is handled automatically — `artifacts/learn/vercel.json` tells Vercel to redirect all paths to `index.html`, so refreshing on `/courses` or deep-linking works.
 
-### Part E — Finish Render config
+### Part D — Connect Render and Vercel
 
-Now that you have the frontend URL, go back to your Render Web Service → **Environment** → add:
+Go back to your **Render Web Service** → **Environment** → add:
 
 | Variable | Value |
 |---|---|
-| `CORS_ORIGIN` | `https://kc-class.vercel.app` *(your actual frontend URL)* |
-| `FRONTEND_URL` | `https://kc-class.vercel.app` *(your actual frontend URL, no trailing slash)* |
+| `CORS_ORIGIN` | Your Vercel URL (e.g. `https://kc-class.vercel.app`) |
+| `FRONTEND_URL` | Same Vercel URL, **no trailing slash** |
 
 Click **Save Changes** — Render redeploys automatically.
 
-**If you didn't add the Clerk webhook yet:**
-1. Go to the Clerk dashboard → **Webhooks** → **Add Endpoint**
-2. URL: `https://kc-class-api.onrender.com/api/webhooks/clerk`
-3. Events: `user.created`, `user.updated`, `user.deleted`
-4. Copy the signing secret → add `CLERK_WEBHOOK_SECRET=whsec_...` to Render environment → **Save Changes**
+### Part E — Set up the Clerk webhook
+
+This syncs new sign-ups to your database instantly.
+
+1. https://dashboard.clerk.com → **Webhooks** → **Add Endpoint**
+2. Set:
+   - **URL:** `https://YOUR-RENDER-URL.onrender.com/api/webhooks/clerk`
+   - **Events:** check `user.created`, `user.updated`, `user.deleted`
+3. Click **Create Endpoint** → copy the **Signing Secret** (`whsec_...`)
+4. Go to Render → **Environment** → add:
+
+| Variable | Value |
+|---|---|
+| `CLERK_WEBHOOK_SECRET` | `whsec_...` from above |
+
+5. Click **Save Changes**.
 
 ### Part F — Verify the deployment
 
-1. Open your frontend URL in a **private/incognito** browser window
-2. The landing page and course catalog load without errors
-3. Click **Sign Up** → create an account → you are redirected to the dashboard
-4. Check the Render logs (`Logs` tab on Render) — you should see the `user.created` webhook firing
-5. Go to `/pricing` → click **Pay Monthly**
-6. You are redirected to eSewa sandbox at `rc-epay.esewa.com.np`
-7. Log in with eSewa test credentials:
-   - **eSewa ID:** `9806800001`
-   - **MPIN:** `1122`
-   - **Password:** `Nepal@123`
-8. Complete the payment → you are redirected back to your site → dashboard shows **Active Subscription**
-9. Open a premium lesson — it plays without restriction
-10. Go to `/resources` — all downloads are accessible
+Open your **Vercel URL** in a **private / incognito** browser window and go through this checklist:
 
-If all 10 steps work, your deployment is complete.
+- [ ] Landing page loads with no console errors (`F12` → Console)
+- [ ] Course catalog loads
+- [ ] **Sign Up** works — you land on `/dashboard`
+- [ ] Check Render logs (`Logs` tab) — you should see `user.created` webhook fired
+- [ ] `/pricing` shows the subscription plans
+- [ ] **Pay Monthly** redirects to eSewa sandbox — test with credentials: ID `9806800001`, MPIN `1122`, Password `Nepal@123`
+- [ ] After payment → back on your Vercel site → **Active Subscription** shows on dashboard
+- [ ] A premium lesson plays
+- [ ] `/resources` is accessible
+
+If all boxes are ticked, your deployment is complete.
 
 ---
 
-## 5. Go Live — Payments, Admin, Content
+## 5. After Deployment
 
 ### 5.1 Promote yourself to admin on the live site
 
-Sign up on your live Vercel site first, then:
+Sign up on the Vercel site first, then:
 
-1. Go to https://neon.tech → your project → **SQL Editor**
-2. Run:
-   ```sql
-   UPDATE users SET role = 'admin' WHERE email = 'your@email.com';
-   ```
-3. Sign out and sign back in on your Vercel site
-4. The **Admin** link appears in the navigation bar
+```sql
+-- Run in Neon SQL Editor (neon.tech → your project → SQL Editor)
+UPDATE users SET role = 'admin' WHERE email = 'your@email.com';
+```
 
-Once you are admin, you can promote other users from the admin panel: `/admin` → **Users** → change their role.
+Sign out and back in — the Admin link appears.
 
 ### 5.2 Enable real eSewa payments
 
-> **Skip this until you are ready to accept real money.** Sandbox mode is fully functional.
+> Skip until your eSewa merchant account is approved. Sandbox mode is fully functional.
 
-After your eSewa merchant account is approved (see section 2.2):
-
-1. Go to your Render Web Service → **Environment** → add:
+Once approved, add these to Render → Environment:
 
 | Variable | Value |
 |---|---|
@@ -517,253 +396,242 @@ After your eSewa merchant account is approved (see section 2.2):
 | `ESEWA_YEARLY_PRICE` | `2399` (or your chosen NPR amount) |
 | `ESEWA_ENV` | `production` |
 
-2. Click **Save Changes** — Render redeploys (~2 minutes)
-3. Make one real payment yourself to confirm it works end-to-end
+Click **Save Changes**. Make one real test payment to confirm.
 
-### 5.3 Add your real course content
+### 5.3 Add your actual course content
 
-The database comes pre-seeded with 4 demo courses, 12 demo lessons, and 6 demo resources. Delete or keep them as you prefer.
+The demo seed data (4 courses, 12 lessons, 6 resources) can be deleted or left as-is.
 
-**To add a course:** Go to your live site → `/admin/courses` → **New Course**
+**Add a course:** Vercel site → `/admin/courses` → **New Course**
 
-**To add lessons:** `/admin/courses` → **Manage Lessons** on the course → **Add Lesson**
+**Add lessons to a course:** `/admin/courses` → **Manage Lessons** → **Add Lesson**
 
-For premium lessons, set your YouTube video to **Unlisted** before copying the ID. Unlisted videos don't appear in YouTube search — only your site provides the link.
+| Field | What to enter |
+|---|---|
+| Title | Lesson name |
+| YouTube Video ID | From `https://youtube.com/watch?v=`**`THIS_PART`** |
+| Duration | In minutes |
+| Sort Order | 1 = first lesson |
+| Free Preview | Toggle on for 1–2 lessons per course |
+| Published | Toggle on to make it visible |
 
-**To add PDF notes and resources:** `/admin` → Resources → **Add Resource** — paste a direct download URL (Google Drive, Dropbox, etc.). Resources are subscriber-only automatically.
+> **For premium lessons:** Set the YouTube video to **Unlisted** before copying the ID. Unlisted videos do not appear in YouTube search.
+
+**Add resources:** `/admin` → Resources → **Add Resource** — paste a direct download URL (Google Drive, Dropbox, etc.).
 
 ### 5.4 Connect a custom domain (optional)
 
-If you own a domain like `kcclassbhw.com`:
-
 **Frontend on Vercel:**
-1. Vercel project → **Settings** → **Domains** → **Add Domain** → enter `kcclassbhw.com`
-2. Add the DNS records Vercel shows you (an A record + a CNAME) at your domain registrar
-3. Wait 15–60 minutes for DNS propagation
+1. Vercel project → **Settings** → **Domains** → **Add** → enter `kcclassbhw.com`
+2. Add the DNS records Vercel shows you at your domain registrar
 
 **API on Render:**
-1. Render Web Service → **Settings** → **Custom Domains** → add `api.kcclassbhw.com`
+1. Render → **Settings** → **Custom Domains** → add `api.kcclassbhw.com`
 2. Follow Render's DNS instructions
 
-**After adding custom domains, update two env vars on Render:**
+**After adding custom domains, update on Render:**
 
 | Variable | New value |
 |---|---|
 | `CORS_ORIGIN` | `https://kcclassbhw.com` |
 | `FRONTEND_URL` | `https://kcclassbhw.com` |
 
-Click **Save Changes** → Render redeploys.
-
-### 5.5 Tell your students
-
-**What is free (no account needed):**
-- Browse all courses and see lesson lists
-- Watch 1–2 free preview lessons per course
-
-**What requires a subscription:**
-- All full lessons (premium)
-- PDF notes and the resource vault
-- Progress tracking and dashboard
-
-**Subscription prices:** NPR 299/month or NPR 2,399/year
-
-**How to subscribe:** Students need an eSewa account — most Nepali students already have one. The eSewa mobile app is available on Android and iOS.
-
-**Tip:** Make 1–2 lessons per course free previews so students can try the content before subscribing.
-
 ---
 
-## 6. Daily Workflow
+## 6. Daily Operations
 
-### Starting the servers every day
+### Start the servers each day
 
 ```powershell
-# Option A — one click in VSCode
+# Option A — one click
 Ctrl+Shift+P → Tasks: Run Task → Start Both (Full Stack)
 
 # Option B — two terminals
-pnpm --filter @workspace/api-server run dev   # Terminal 1: starts API on port 8080
-pnpm --filter @workspace/learn run dev         # Terminal 2: starts frontend on port 3000
+pnpm --filter @workspace/api-server run dev   # API server on port 8080
+pnpm --filter @workspace/learn run dev         # Frontend on port 3000
 ```
 
-Then open http://localhost:3000.
+Open http://localhost:3000.
 
-- Frontend file changes → browser reloads automatically (hot module replacement)
-- API server file changes → server rebuilds and restarts (~3 seconds)
+### Deploy code changes
 
-### Adding new videos to existing courses
+Push to `main` on GitHub — both Render and Vercel rebuild automatically.
 
-1. Upload the video to YouTube → set visibility to **Unlisted**
-2. Copy the video ID from the URL
-3. Go to your live site → `/admin/courses` → **Manage Lessons** on the course → **Add Lesson**
-4. Paste the video ID, fill in title, duration, sort order, toggle **Published** on → **Create Lesson**
+| Service | What rebuilds | Time |
+|---|---|---|
+| Render | API server | ~3 min |
+| Vercel | Frontend | ~1 min |
 
-Students with active subscriptions can watch immediately.
-
-### Deploying code changes
-
-Push to the `main` branch on GitHub:
-
-| Service | What happens automatically |
-|---|---|
-| Render | Rebuilds and redeploys the API (~3 minutes) |
-| Vercel | Rebuilds and redeploys the frontend (~1 minute) |
-
-No manual steps needed.
-
-**Exception:** If you change the database schema (`lib/db/src/schema/`), run the schema push after the code deploys:
-
-```powershell
-$env:DATABASE_URL="postgresql://...your neon connection string..."
-pnpm --filter @workspace/db run push
-```
+> **If you changed the database schema** (`lib/db/src/schema/`), run the push after the new code is deployed:
+> ```powershell
+> $env:DATABASE_URL="postgresql://...your neon string..."
+> pnpm --filter @workspace/db run push
+> ```
 
 ---
 
-## 7. Reference
+## 7. Environment Variable Reference
 
-### All commands
+### API server — `artifacts/api-server/.env`
 
-| Command | What it does |
-|---|---|
-| `pnpm install` | Install all dependencies (run once after cloning) |
-| `pnpm --filter @workspace/api-server run dev` | Start API server on port 8080 (development) |
-| `pnpm --filter @workspace/learn run dev` | Start frontend on port 3000 (development) |
-| `pnpm --filter @workspace/db run push` | Apply database schema to your database |
-| `pnpm --filter @workspace/db run push-force` | Same as push but skips interactive Y/N prompt |
-| `pnpm run typecheck` | TypeScript check across all packages |
-| `pnpm --filter @workspace/api-spec run codegen` | Regenerate API hooks (only needed after editing `openapi.yaml`) |
-
-### All environment variables
-
-#### API server — `artifacts/api-server/.env`
-
-| Variable | Required for | Default | Description |
+| Variable | Local dev | Production (Render) | Default |
 |---|---|---|---|
-| `PORT` | Always | — | `8080` locally; Render sets this automatically |
-| `NODE_ENV` | Always | — | `development` locally, `production` on Render |
-| `DATABASE_URL` | Always | — | PostgreSQL connection string from Neon |
-| `CLERK_PUBLISHABLE_KEY` | Always | — | `pk_test_...` locally, `pk_live_...` on Render |
-| `CLERK_SECRET_KEY` | Always | — | `sk_test_...` locally, `sk_live_...` on Render |
-| `CLERK_WEBHOOK_SECRET` | Production | — | `whsec_...` — enables instant user sync on sign-up |
-| `CORS_ORIGIN` | Production | All origins | Your Vercel URL — locks down CORS in production |
-| `FRONTEND_URL` | Production | `http://localhost:3000` | Your Vercel URL — used for eSewa payment redirects |
-| `ESEWA_PRODUCT_CODE` | Live payments | `EPAYTEST` | Your eSewa merchant code |
-| `ESEWA_SECRET_KEY` | Live payments | eSewa test key | Your eSewa HMAC secret key |
-| `ESEWA_MONTHLY_PRICE` | Optional | `299` | Monthly subscription price in NPR |
-| `ESEWA_YEARLY_PRICE` | Optional | `2399` | Yearly subscription price in NPR |
-| `ESEWA_ENV` | Live payments | — | Set to `production` to enable real eSewa payments |
+| `PORT` | `8080` | Set by Render automatically | — |
+| `NODE_ENV` | `development` | `production` | — |
+| `DATABASE_URL` | Your Neon string | Your Neon string | — |
+| `CLERK_PUBLISHABLE_KEY` | `pk_test_...` | `pk_live_...` | — |
+| `CLERK_SECRET_KEY` | `sk_test_...` | `sk_live_...` | — |
+| `CLERK_WEBHOOK_SECRET` | *(omit)* | `whsec_...` from Clerk webhook | — |
+| `CORS_ORIGIN` | *(omit — all origins allowed)* | `https://your-app.vercel.app` | All origins |
+| `FRONTEND_URL` | *(omit)* | `https://your-app.vercel.app` | `http://localhost:3000` |
+| `YOUTUBE_CHANNEL_ID` | *(omit — uses default)* | Your channel ID (`UC...`) | KC Class BHW channel |
+| `ESEWA_MONTHLY_PRICE` | *(omit)* | `299` | `299` |
+| `ESEWA_YEARLY_PRICE` | *(omit)* | `2399` | `2399` |
+| `ESEWA_PRODUCT_CODE` | *(omit — sandbox)* | Your eSewa merchant code | `EPAYTEST` |
+| `ESEWA_SECRET_KEY` | *(omit — sandbox)* | Your eSewa HMAC key | eSewa test key |
+| `ESEWA_ENV` | *(omit)* | `production` (when live) | sandbox |
+| `PNPM_VERSION` | *(not needed)* | `10.26.1` | — |
 
-#### Frontend — `artifacts/learn/.env`
+### Frontend — `artifacts/learn/.env`
 
-| Variable | Required | Description |
+| Variable | Local dev | Production (Vercel) |
 |---|---|---|
-| `VITE_CLERK_PUBLISHABLE_KEY` | Always | Same value as `CLERK_PUBLISHABLE_KEY` on the API server |
-| `VITE_API_URL` | Always | `http://localhost:8080` locally; your Render URL in production |
-| `PORT` | Always | `3000` locally; ignored by Vercel in production |
-| `BASE_PATH` | Always | Always `/` |
-
-### Admin panel URLs
-
-| URL | What it does |
-|---|---|
-| `/admin` | Platform stats, user list, subscription list |
-| `/admin/courses` | Create, edit, publish, delete courses |
-| `/admin/courses/:id/lessons` | Add and manage lessons |
-| `/pricing` | What students see when subscribing |
-| `/dashboard` | What a signed-in student sees |
-| `/resources` | Resource vault (subscriber-only) |
-| `/videos` | Auto-synced YouTube channel page |
-| `/settings` | Profile and subscription management |
+| `VITE_CLERK_PUBLISHABLE_KEY` | `pk_test_...` | `pk_live_...` |
+| `VITE_API_URL` | `http://localhost:8080` | `https://your-api.onrender.com` |
+| `PORT` | `3000` | *(not used — Vercel handles this)* |
+| `BASE_PATH` | `/` | `/` |
 
 ---
 
 ## 8. Troubleshooting
 
-### Local development problems
+### Local development
 
-**`pnpm` is not recognized as a command**
-Close VSCode completely and reopen it. If still missing, run `npm install -g pnpm` in PowerShell, then reopen.
+**`pnpm` is not recognized**
+Close VSCode completely and reopen it. If still missing: `npm install -g pnpm` in PowerShell, then reopen.
 
-**Blank white page or nothing loads at localhost:3000**
-Open browser DevTools (`F12`) → **Console** tab:
-- "Missing VITE_CLERK_PUBLISHABLE_KEY" → `artifacts\learn\.env` is missing or the key is still a placeholder. Check Step 4.
-- Network error → make sure the API server is running (Terminal 1 shows `Server listening port: 8080`)
-
-**`Error: PORT environment variable is required`**
-`artifacts\api-server\.env` does not exist or is missing `PORT=8080`. Create it from `.env.example` (Step 3).
+**Blank white page at localhost:3000**
+Open `F12` → Console:
+- "Missing VITE_CLERK_PUBLISHABLE_KEY" → `artifacts\learn\.env` is missing or still has a placeholder
+- Network error (red API calls) → API server isn't running yet; wait for `Server listening on port 8080`
 
 **`Error: DATABASE_URL is not set`**
-`artifacts\api-server\.env` is missing or `DATABASE_URL` is still `REPLACE_WITH_YOUR_CONNECTION_STRING`. Fill it in with your Neon connection string (Step 5).
+`artifacts\api-server\.env` doesn't exist or `DATABASE_URL` is still `REPLACE_WITH_YOUR_CONNECTION_STRING`.
 
-**`ECONNREFUSED 127.0.0.1:5432`**
-You entered a local PostgreSQL URL but PostgreSQL is not running locally. Switch to your Neon connection string instead — much simpler, no local database needed.
+**`SSL SYSCALL error` or `unable to get local issuer certificate`**
+Windows SSL issue with Neon. Make sure your connection string ends with `?sslmode=require`. The app handles the rest automatically.
 
-**`SSL SYSCALL error: EOF detected` or `unable to get local issuer certificate`**
-This is a Windows SSL issue. Make sure your Neon connection string ends with `?sslmode=require` — the app handles the rest automatically. Do not remove the `sslmode=require` part.
+**`Failed to load Clerk JS` in browser console**
+You have `VITE_CLERK_PROXY_URL=...` in `artifacts\learn\.env`. Delete that entire line — it only works with production keys on a custom domain.
 
-**`Failed to load Clerk JS` in the browser console**
-You have `VITE_CLERK_PROXY_URL=...` in `artifacts\learn\.env`. Delete that entire line. This setting only works with production keys on a custom domain — never in local development.
+**Sign-in doesn't work**
+The `VITE_CLERK_PUBLISHABLE_KEY` in `artifacts\learn\.env` and `CLERK_PUBLISHABLE_KEY` in `artifacts\api-server\.env` must be **exactly the same** `pk_test_...` value.
 
-**Sign-in does not work**
-Confirm `VITE_CLERK_PUBLISHABLE_KEY` in `artifacts\learn\.env` is the same value as `CLERK_PUBLISHABLE_KEY` in `artifacts\api-server\.env`. Both must be the same `pk_test_...` string.
-
-**`Cannot find module '@workspace/db'`**
-Run `pnpm install` again — a symlink may have been lost.
-
-**TypeScript errors in the VSCode editor but `pnpm run typecheck` passes**
-`Ctrl+Shift+P` → **TypeScript: Select TypeScript Version** → **Use Workspace Version**.
-
-**Drizzle `push` prints nothing and hangs**
-It is waiting for a Y/N prompt that your terminal is not showing. Type `y` then Enter, or use `push-force` to skip it:
+**Drizzle push hangs**
+It is waiting for a Y/N prompt. Type `y` + Enter. Or use:
 ```powershell
 pnpm --filter @workspace/db run push-force
 ```
 
+**TypeScript errors in VSCode but `pnpm run typecheck` passes**
+`Ctrl+Shift+P` → **TypeScript: Select TypeScript Version** → **Use Workspace Version**.
+
+**`Cannot find module '@workspace/db'`**
+Run `pnpm install` again — a symlink may have been lost.
+
+**`/admin` shows "Access denied"**
+You haven't promoted your account yet. Run in Neon SQL Editor:
+```sql
+UPDATE users SET role = 'admin' WHERE email = 'your@email.com';
+```
+
 ---
 
-### Production / deployment problems
+### Production / deployment
 
-**Render build fails**
-Check that the Build Command is exactly:
+**Render build fails with "pnpm: command not found"**
+Add `PNPM_VERSION=10.26.1` to Render environment variables.
+
+**Render build fails with any other error**
+Check the Build Command is exactly:
 ```
 pnpm install --frozen-lockfile && pnpm --filter @workspace/api-server run build
 ```
-And Start Command is:
+And Start Command:
 ```
 node --enable-source-maps ./artifacts/api-server/dist/index.mjs
 ```
 
-**API healthcheck returns 502 or connection refused**
-Render is still starting up (takes 1–2 minutes after the build). Wait and try again.
+**`/api/healthz` returns 502 or times out**
+Render is still cold-starting (~30 seconds on free plan). Wait and retry.
 
-**Sign-in page crashes on the live Vercel site**
-`VITE_CLERK_PUBLISHABLE_KEY` on Vercel must be a `pk_live_...` key (not `pk_test_`). Production Clerk requires live keys.
+**Sign-in page crashes on Vercel**
+`VITE_CLERK_PUBLISHABLE_KEY` on Vercel must be a `pk_live_...` key (not `pk_test_`). Switch Clerk to Production mode first.
 
-**Courses or lessons do not load — API calls fail**
-Check that `VITE_API_URL` on Vercel matches your exact Render URL (no trailing slash, with `https://`).
+**Courses don't load — API calls fail (404 or CORS error)**
+- Check `VITE_API_URL` on Vercel matches your exact Render URL with `https://` and no trailing slash
+- Check `CORS_ORIGIN` on Render matches your exact Vercel URL
 
-**eSewa payment fails or redirects to the wrong place**
-Check these on Render:
-- `FRONTEND_URL` is set to your Vercel URL with no trailing slash
-- `ESEWA_PRODUCT_CODE` and `ESEWA_SECRET_KEY` are correct (when live payments are enabled)
-- `ESEWA_ENV=production` is set (when live payments are enabled)
+**eSewa payment redirects to the wrong place**
+Check `FRONTEND_URL` on Render — it must be your Vercel URL with no trailing slash.
 
-**Users are not appearing in the database after sign-up**
-The Clerk webhook is not configured or the secret is wrong. Check `CLERK_WEBHOOK_SECRET` on Render matches the `whsec_...` secret from the Clerk webhook settings.
-
-**`/admin` shows "Access denied"**
-Run this in the Neon SQL Editor:
-```sql
-UPDATE users SET role = 'admin' WHERE email = 'your@email.com';
-```
-Sign out and back in.
-
-**Render is slow on the first request**
-This is expected on the free plan — the server sleeps after 15 minutes of inactivity. The first request after sleep takes ~30 seconds. Upgrade to the paid plan ($7/month) for always-on.
+**New sign-ups don't appear in the database**
+The Clerk webhook is not set up or the secret is wrong. Check:
+1. The webhook URL in Clerk matches your Render URL exactly
+2. `CLERK_WEBHOOK_SECRET` on Render matches the `whsec_...` from Clerk
 
 **Videos page is empty**
-The `/videos` page reads your YouTube channel's RSS feed. Make sure your YouTube channel ID is configured, and wait up to 10 minutes for the feed to sync after publishing a new video.
+Set `YOUTUBE_CHANNEL_ID` on Render to your channel ID (starts with `UC...`). Without it, the app uses the default KC Class BHW channel.
+
+**Render is slow on the first request (~30 seconds)**
+Expected on the free plan — the server sleeps after 15 minutes of inactivity. Upgrade to the $7/month paid plan for always-on.
 
 ---
 
+## Project Structure (for reference)
+
+```
+KC-Class/
+├── artifacts/
+│   ├── api-server/          Express API server
+│   │   ├── src/routes/      Route handlers
+│   │   ├── .env             Your local config  ← YOU CREATE THIS
+│   │   └── .env.example     Template
+│   └── learn/               React frontend
+│       ├── src/pages/       All pages
+│       ├── src/components/  Shared UI
+│       ├── vercel.json      SPA routing (all paths → index.html)
+│       ├── .env             Your local config  ← YOU CREATE THIS
+│       └── .env.example     Template
+├── lib/
+│   ├── db/src/schema/       Database tables (Drizzle ORM)
+│   ├── api-spec/            OpenAPI spec (source of truth for API)
+│   ├── api-zod/             Auto-generated Zod schemas — do not edit
+│   └── api-client-react/    Auto-generated React Query hooks — do not edit
+├── .vscode/tasks.json       VSCode tasks (Start Both, Push DB, Typecheck)
+└── DOCS.md                  This file
+```
+
+### Useful commands
+
+| Command | What it does |
+|---|---|
+| `pnpm install` | Install all dependencies |
+| `pnpm --filter @workspace/api-server run dev` | Start API server (port 8080) |
+| `pnpm --filter @workspace/learn run dev` | Start frontend (port 3000) |
+| `pnpm --filter @workspace/db run push` | Apply schema to database |
+| `pnpm --filter @workspace/db run push-force` | Same — skips Y/N prompt |
+| `pnpm run typecheck` | Full TypeScript check |
+| `pnpm --filter @workspace/api-spec run codegen` | Regenerate API hooks (after editing `openapi.yaml`) |
+
+### Admin URLs
+
+| URL | Purpose |
+|---|---|
+| `/admin` | Stats, users, subscriptions |
+| `/admin/courses` | Course management |
+| `/admin/courses/:id/lessons` | Lesson management |
+| `/pricing` | Subscription plans (what students see) |
+| `/dashboard` | Student dashboard |
+| `/resources` | Resource vault |
+| `/videos` | YouTube channel auto-sync |
