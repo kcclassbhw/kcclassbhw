@@ -95,21 +95,28 @@ export const ensureUser = async (req: any, res: any, next: any): Promise<void> =
   if (!userId) { next(); return; }
   req.userId = userId as string;
 
-  const [existing] = await db
-    .select()
-    .from(usersTable)
-    .where(eq(usersTable.clerkId, userId as string));
+  try {
+    const [existing] = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.clerkId, userId as string));
 
-  if (!existing) {
-    try {
-      await upsertUserFromClerk(userId as string);
-    } catch {
-      // Fallback: create a minimal row so the request can proceed
-      await db
-        .insert(usersTable)
-        .values({ clerkId: userId as string, email: "", name: "" })
-        .onConflictDoNothing();
+    if (!existing) {
+      try {
+        await upsertUserFromClerk(userId as string);
+      } catch {
+        // Fallback: create a minimal row so the request can proceed
+        await db
+          .insert(usersTable)
+          .values({ clerkId: userId as string, email: "", name: "" })
+          .onConflictDoNothing();
+      }
     }
+  } catch (err) {
+    // DB unavailable or schema not yet migrated — req.userId is already set so
+    // public routes still work. Authenticated routes that need DB will fail on
+    // their own queries with a clear error.
+    req.log.warn({ err, userId }, "ensureUser: DB lookup failed, continuing without user sync");
   }
 
   next();
