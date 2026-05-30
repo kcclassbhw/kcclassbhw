@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: api-server
+    runtime: node
+    plan: free
+    rootDir: .
+    buildCommand: npm install -g pnpm && pnpm install --frozen-lockfile && pnpm --filter @workspace/api-server run build
+    startCommand: node --enable-source-maps ./artifacts/api-server/dist/index.mjs
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: CLERK_PUBLISHABLE_KEY
+        sync: false
+      - key: CLERK_SECRET_KEY
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: CLERK_WEBHOOK_SECRET
+        sync: false
+      - key: YOUTUBE_CHANNEL_ID
+        sync: false
