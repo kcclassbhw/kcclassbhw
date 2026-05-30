@@ -207,7 +207,7 @@ export default function AdminLessons() {
         </div>
       ) : lessons && lessons.length > 0 ? (
         <div className="space-y-3">
-          {lessons.sort((a,b) => a.order - b.order).map((lesson, idx) => (
+          {[...lessons].sort((a,b) => a.order - b.order).map((lesson) => (
             <Card key={lesson.id} className="overflow-hidden">
               <CardContent className="p-4 flex items-center gap-4">
                 <div className="text-muted-foreground cursor-grab hover:text-foreground">

@@ -142,27 +142,40 @@ router.post("/subscriptions/verify", requireAuth, async (req: any, res): Promise
       return;
     }
 
+    const transactionId = String(transaction_code);
+
+    // Replay protection: reject if this eSewa transaction ID was already
+    // used by a *different* user. Same user retrying is idempotent — allow.
+    const [claimedByOther] = await db
+      .select()
+      .from(subscriptionsTable)
+      .where(eq(subscriptionsTable.esewaTransactionId, transactionId));
+    if (claimedByOther && claimedByOther.userId !== req.userId) {
+      logger.warn({ transactionId, userId: req.userId }, "eSewa transaction already used by another user — possible replay");
+      res.status(400).json({ error: "This payment has already been processed" });
+      return;
+    }
+
     const now = new Date();
     const periodEnd =
       validatedPlan === "yearly"
         ? new Date(now.getFullYear() + 1, now.getMonth(), now.getDate())
         : new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
 
-    const [existing] = await db.select().from(subscriptionsTable).where(eq(subscriptionsTable.userId, req.userId));
     const values = {
       userId: req.userId,
-      esewaTransactionId: String(transaction_code),
-      status: "active",
+      esewaTransactionId: transactionId,
+      status: "active" as const,
       plan: validatedPlan,
       currentPeriodEnd: periodEnd,
       cancelAtPeriodEnd: false,
     };
 
-    if (existing) {
-      await db.update(subscriptionsTable).set(values).where(eq(subscriptionsTable.userId, req.userId));
-    } else {
-      await db.insert(subscriptionsTable).values(values);
-    }
+    // Atomic upsert — safe if the same user calls verify twice concurrently
+    await db
+      .insert(subscriptionsTable)
+      .values(values)
+      .onConflictDoUpdate({ target: subscriptionsTable.userId, set: values });
 
     res.json({ success: true });
   } catch (err) {

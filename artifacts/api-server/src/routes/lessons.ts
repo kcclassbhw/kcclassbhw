@@ -48,7 +48,7 @@ router.get("/courses/:courseId/lessons/:id", async (req, res): Promise<void> => 
   const [lesson] = await db
     .select()
     .from(lessonsTable)
-    .where(and(eq(lessonsTable.id, params.data.id), eq(lessonsTable.courseId, params.data.courseId)));
+    .where(and(eq(lessonsTable.id, params.data.id), eq(lessonsTable.courseId, params.data.courseId), eq(lessonsTable.isPublished, true)));
   if (!lesson) { res.status(404).json({ error: "Lesson not found" }); return; }
 
   // If not free, check subscription

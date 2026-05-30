@@ -65,7 +65,7 @@ router.get("/courses/:id", async (req, res): Promise<void> => {
   const params = GetCourseParams.safeParse({ id: req.params.id });
   if (!params.success) { res.status(400).json({ error: "Invalid id" }); return; }
 
-  const [course] = await db.select().from(coursesTable).where(eq(coursesTable.id, params.data.id));
+  const [course] = await db.select().from(coursesTable).where(and(eq(coursesTable.id, params.data.id), eq(coursesTable.isPublished, true)));
   if (!course) { res.status(404).json({ error: "Course not found" }); return; }
 
   const lessons = await db
