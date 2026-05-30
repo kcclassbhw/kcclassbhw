@@ -7,6 +7,7 @@ import { LayoutDashboard, LogOut, Settings, ShieldCheck, Sun, Moon, Library, Men
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useGetMe } from "@workspace/api-client-react";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
@@ -35,11 +36,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
 function Navbar() {
   const { theme, setTheme } = useTheme();
-  const { user } = useUser();
+  const { user, isSignedIn } = useUser();
   const { signOut } = useClerk();
   const [location] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+
+  const { data: me } = useGetMe({ query: { enabled: !!isSignedIn, queryKey: ["getMe"] } });
+  const isAdmin = me?.role === "admin";
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -49,7 +53,6 @@ function Navbar() {
 
   useEffect(() => setMobileOpen(false), [location]);
 
-  /* Lock body scroll when mobile menu is open */
   useEffect(() => {
     if (mobileOpen) {
       document.body.style.overflow = "hidden";
@@ -206,7 +209,7 @@ function Navbar() {
                       <span>Settings</span>
                     </Link>
                   </DropdownMenuItem>
-                  {user?.publicMetadata?.role === "admin" && (
+                  {isAdmin && (
                     <DropdownMenuItem asChild>
                       <Link href="/admin" className="flex cursor-pointer items-center gap-2 rounded-xl mx-1 font-bold text-emerald-600 dark:text-emerald-400">
                         <ShieldCheck className="h-4 w-4" />
@@ -283,7 +286,7 @@ function Navbar() {
           </div>
         </div>
 
-        {/* Mobile Menu — animated */}
+        {/* Mobile Menu */}
         <AnimatePresence>
           {mobileOpen && (
             <motion.div
@@ -322,7 +325,14 @@ function Navbar() {
                       </Link>
                     </motion.div>
                   ))}
-                  <motion.div custom={navLinks.length + 3} variants={mobileItemVariants} initial="hidden" animate="show">
+                  {isAdmin && (
+                    <motion.div custom={navLinks.length + 3} variants={mobileItemVariants} initial="hidden" animate="show">
+                      <Link href="/admin" className="px-4 py-3 text-sm font-bold rounded-xl text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-colors flex items-center gap-2">
+                        <ShieldCheck className="h-4 w-4" /> Admin Panel
+                      </Link>
+                    </motion.div>
+                  )}
+                  <motion.div custom={navLinks.length + 4} variants={mobileItemVariants} initial="hidden" animate="show">
                     <button
                       className="w-full px-4 py-3 text-sm font-semibold rounded-xl text-destructive hover:bg-destructive/10 transition-colors text-left flex items-center gap-2"
                       onClick={() => signOut({ redirectUrl: "/" })}
