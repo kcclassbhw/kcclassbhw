@@ -1,0 +1,36 @@
+2026-05-30T09:34:34.993685587Z ==> Cloning from https://github.com/BugBasherX/kcclassbhw
+2026-05-30T09:34:35.532340935Z ==> Checking out commit 499f63776fd4ccef6fad6b3b5bb9e75355ac835b in branch main
+2026-05-30T09:34:36.984536582Z ==> Requesting Node.js version >=22.0.0
+2026-05-30T09:34:37.166539996Z ==> Using Node.js version 26.2.0 via /opt/render/project/src/package.json
+2026-05-30T09:34:37.166556926Z ==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+2026-05-30T09:34:37.1667036Z ==> Installing Node.js version 26.2.0...
+2026-05-30T09:34:38.298404139Z ==> Running build command 'npm install -g pnpm && pnpm install --frozen-lockfile && pnpm --filter @workspace/api-server run build'...
+2026-05-30T09:34:39.244624558Z 
+2026-05-30T09:34:39.244646668Z added 1 package in 881ms
+2026-05-30T09:34:39.244657259Z 
+2026-05-30T09:34:39.24470779Z 1 package is looking for funding
+2026-05-30T09:34:39.244775511Z   run `npm fund` for details
+2026-05-30T09:34:39.841354802Z Scope: all 9 workspace projects
+2026-05-30T09:34:39.912514246Z ? Verifying lockfile against supply-chain policies (582 entries)...
+2026-05-30T09:34:42.362243128Z ✓ Lockfile passes supply-chain policies (582 entries in 2.4s)
+2026-05-30T09:34:42.368167086Z Lockfile is up to date, resolution step is skipped
+2026-05-30T09:34:42.396195419Z Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-05-30T09:34:42.423411441Z Packages: +511
+2026-05-30T09:34:42.423423562Z ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-05-30T09:34:43.397280603Z Progress: resolved 511, reused 0, downloaded 117, added 90
+2026-05-30T09:34:44.396838419Z Progress: resolved 511, reused 0, downloaded 320, added 260
+2026-05-30T09:34:45.397096692Z Progress: resolved 511, reused 0, downloaded 335, added 264
+2026-05-30T09:34:46.397365467Z Progress: resolved 511, reused 0, downloaded 437, added 322
+2026-05-30T09:34:47.334420565Z Progress: resolved 511, reused 0, downloaded 511, added 511, done
+2026-05-30T09:34:47.580497645Z 
+2026-05-30T09:34:47.580518556Z devDependencies:
+2026-05-30T09:34:47.580522256Z + prettier 3.8.1
+2026-05-30T09:34:47.580525976Z + typescript 5.9.3
+2026-05-30T09:34:47.580528866Z 
+2026-05-30T09:34:47.605374649Z . preinstall$ node ./scripts/check-package-manager.cjs
+2026-05-30T09:34:47.650624524Z . preinstall:   ERROR: Please use pnpm to install dependencies.
+2026-05-30T09:34:47.650653255Z . preinstall:   Run:  pnpm install
+2026-05-30T09:34:47.652581443Z . preinstall: Failed
+2026-05-30T09:34:47.658486971Z [ELIFECYCLE] Command failed with exit code 1.
+2026-05-30T09:34:47.977350467Z ==> Build failed 😞
+2026-05-30T09:34:47.977381708Z ==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
