@@ -281,3 +281,5 @@ pnpm --filter @workspace/api-spec run codegen
 **HTTP security headers:** Helmet is applied to every API response, setting CSP, HSTS, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and removing `X-Powered-By`.
 
 **Subscription expiry:** eSewa does not support automatic recurring billing. Subscriptions are one-time payments valid for 1 month or 1 year. The server auto-marks subscriptions inactive on the next `/api/subscriptions/me` call after `currentPeriodEnd` passes.
+#   k c c l a s s b h w  
+ 
