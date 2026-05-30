@@ -97,6 +97,14 @@ app.use(
   })),
 );
 
+// ── Root health check ─────────────────────────────────────────────────────────
+// Render's health check pings GET /healthz (configured in render.yaml).
+// This must live at the app root — NOT under /api — so it is reachable
+// without going through the API router or any auth middleware.
+app.get("/healthz", (_req, res) => {
+  res.json({ status: "ok" });
+});
+
 app.use("/api", router);
 
 // ── Global error handler ──────────────────────────────────────────────────────
