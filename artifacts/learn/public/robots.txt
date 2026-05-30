@@ -1,2 +1,8 @@
 User-agent: *
 Allow: /
+Disallow: /dashboard
+Disallow: /settings
+Disallow: /admin
+Disallow: /payment
+
+Sitemap: https://kcclassbhw.vercel.app/sitemap.xml

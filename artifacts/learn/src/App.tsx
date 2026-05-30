@@ -1,4 +1,4 @@
-import React, { Component, useEffect, useRef } from "react";
+import React, { Component, Suspense, useEffect, useRef } from "react";
 import { ClerkProvider, SignIn, SignUp, Show, useClerk, useUser } from '@clerk/react';
 import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
@@ -10,20 +10,20 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 
-import HomePage from "./pages/home";
-import DashboardPage from "./pages/dashboard";
-import CoursesPage from "./pages/courses";
-import CourseDetailPage from "./pages/course-detail";
-import LessonPage from "./pages/lesson";
-import ResourcesPage from "./pages/resources";
-import PricingPage from "./pages/pricing";
-import SettingsPage from "./pages/settings";
-import AdminDashboard from "./pages/admin";
-import AdminCourses from "./pages/admin-courses";
-import AdminLessons from "./pages/admin-lessons";
-import VideosPage from "./pages/videos";
-import PaymentVerifyPage from "./pages/payment-verify";
-import NotFound from "./pages/not-found";
+const HomePage = React.lazy(() => import("./pages/home"));
+const DashboardPage = React.lazy(() => import("./pages/dashboard"));
+const CoursesPage = React.lazy(() => import("./pages/courses"));
+const CourseDetailPage = React.lazy(() => import("./pages/course-detail"));
+const LessonPage = React.lazy(() => import("./pages/lesson"));
+const ResourcesPage = React.lazy(() => import("./pages/resources"));
+const PricingPage = React.lazy(() => import("./pages/pricing"));
+const SettingsPage = React.lazy(() => import("./pages/settings"));
+const AdminDashboard = React.lazy(() => import("./pages/admin"));
+const AdminCourses = React.lazy(() => import("./pages/admin-courses"));
+const AdminLessons = React.lazy(() => import("./pages/admin-lessons"));
+const VideosPage = React.lazy(() => import("./pages/videos"));
+const PaymentVerifyPage = React.lazy(() => import("./pages/payment-verify"));
+const NotFound = React.lazy(() => import("./pages/not-found"));
 import { useGetMe } from "@workspace/api-client-react";
 import Layout from "./components/layout";
 
@@ -216,6 +216,7 @@ function ClerkProviderWithRoutes() {
         <ClerkQueryClientCacheInvalidator />
         <TooltipProvider>
           <Layout>
+            <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><span className="text-muted-foreground text-sm">Loading…</span></div>}>
             <Switch>
               <Route path="/" component={HomeRedirect} />
               <Route path="/sign-in/*?" component={SignInPage} />
@@ -239,6 +240,7 @@ function ClerkProviderWithRoutes() {
               
               <Route component={NotFound} />
             </Switch>
+            </Suspense>
           </Layout>
           <Toaster />
         </TooltipProvider>

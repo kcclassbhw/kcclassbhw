@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "wouter";
 import { useListCourses } from "@workspace/api-client-react";
+import { useSEO } from "@/hooks/useSEO";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +9,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Search, BookOpen, Clock, X } from "lucide-react";
 
 export default function CoursesPage() {
+  useSEO({
+    title: "Course Catalog",
+    description: "Browse all B.Ed English courses — grammar, literature, pedagogy, phonetics, and writing skills. Structured lessons for B.Ed students.",
+  });
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("all");
   const [debouncedSearch, setDebouncedSearch] = useState("");

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useListChannelVideos } from "@workspace/api-client-react";
+import { useSEO } from "@/hooks/useSEO";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,10 @@ function formatViews(n: number): string {
 }
 
 export default function VideosPage() {
+  useSEO({
+    title: "Free B.Ed English Videos",
+    description: "Watch all B.Ed English video lessons from the KC Class BHW YouTube channel — grammar, literature, pedagogy, phonetics, and more.",
+  });
   const { data: videos, isLoading, error } = useListChannelVideos();
   const [search, setSearch] = useState("");
   const [playing, setPlaying] = useState<string | null>(null);

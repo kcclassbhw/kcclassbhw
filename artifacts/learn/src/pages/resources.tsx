@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useListResources } from "@workspace/api-client-react";
+import { useSEO } from "@/hooks/useSEO";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +12,11 @@ import {
 import { toast } from "sonner";
 
 export default function ResourcesPage() {
+  useSEO({
+    title: "Study Resources & PDF Notes",
+    description: "Download PDF notes, grammar charts, question banks, and model answer papers for B.Ed English — exclusively for subscribers.",
+    noIndex: true,
+  });
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("all");
   const [debouncedSearch, setDebouncedSearch] = useState("");

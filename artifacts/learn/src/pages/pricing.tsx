@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useCreateCheckoutSession, useGetMySubscription } from "@workspace/api-client-react";
+import { useSEO } from "@/hooks/useSEO";
 import { Button } from "@/components/ui/button";
 import { Check, Info, Sparkles, ArrowRight, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
@@ -21,6 +22,10 @@ function submitEsewaForm(paymentUrl: string, formData: Record<string, string>) {
 }
 
 export default function PricingPage() {
+  useSEO({
+    title: "Pricing — KC Class Premium",
+    description: "Get full access to all B.Ed English courses, PDF notes, and resources. NPR 299/month or NPR 2399/year. Secure payment via eSewa.",
+  });
   const [isYearly, setIsYearly] = useState(true);
   const checkoutMutation = useCreateCheckoutSession();
   const { data: subscription, isLoading: isSubLoading } = useGetMySubscription();

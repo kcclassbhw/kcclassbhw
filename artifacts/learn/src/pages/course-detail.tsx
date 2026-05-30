@@ -5,6 +5,7 @@ import {
   useGetMySubscription,
   useCreateCheckoutSession
 } from "@workspace/api-client-react";
+import { useSEO } from "@/hooks/useSEO";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -35,6 +36,12 @@ export default function CourseDetailPage() {
   const { data: subscription, isLoading: isSubLoading } = useGetMySubscription();
   const checkoutMutation = useCreateCheckoutSession();
   const isPremium = subscription?.status === "active";
+
+  useSEO({
+    title: course ? `${course.title} — B.Ed English Course` : "B.Ed English Course",
+    description: course?.description ?? undefined,
+    ogImage: course?.thumbnailUrl ?? undefined,
+  });
 
   const handleCheckout = () => {
     checkoutMutation.mutate({ data: { plan: "monthly" } }, {

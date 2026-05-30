@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { PlayCircle, FileText, ArrowRight, Star, GraduationCap, Youtube, Twitter, Instagram, Zap, Shield, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useSEO } from "@/hooks/useSEO";
 
 /* ─── Shared animation variants ─────────────────────────────────────────── */
 
@@ -33,6 +34,7 @@ const viewportOpts = { once: true, margin: "-60px" };
 /* ─── Page ───────────────────────────────────────────────────────────────── */
 
 export default function HomePage() {
+  useSEO();
   return (
     <div className="flex flex-col min-h-screen overflow-x-hidden">
 
