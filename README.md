@@ -282,4 +282,5 @@ pnpm --filter @workspace/api-spec run codegen
 
 **Subscription expiry:** eSewa does not support automatic recurring billing. Subscriptions are one-time payments valid for 1 month or 1 year. The server auto-marks subscriptions inactive on the next `/api/subscriptions/me` call after `currentPeriodEnd` passes.
 #   k c c l a s s b h w  
+ #   k c c l a s s b h w  
  
