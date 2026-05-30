@@ -24,3 +24,17 @@ services:
         sync: false
       - key: YOUTUBE_CHANNEL_ID
         sync: false
+      - key: ESEWA_SECRET_KEY
+        sync: false
+      - key: ESEWA_PRODUCT_CODE
+        sync: false
+      - key: ESEWA_ENV
+        value: production
+      - key: ESEWA_MONTHLY_PRICE
+        sync: false
+      - key: ESEWA_YEARLY_PRICE
+        sync: false
+      - key: STORAGE_BASE_URL
+        sync: false
+      - key: LOG_LEVEL
+        value: info
