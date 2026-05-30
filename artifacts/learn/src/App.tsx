@@ -32,21 +32,9 @@ const clerkPubKey = publishableKeyFromHost(
   import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
 );
 
-// Clerk proxy rules:
-//  1. No proxy set → load directly from Clerk CDN (always safe)
-//  2. Dev keys (pk_test_) → proxy is unsupported by Clerk, skip it
-//  3. Proxy points to localhost but browser is not on localhost → skip it
-//     (happens when viewing Replit preview while .env has localhost proxy)
-//  4. All other cases → use the proxy (production custom-domain deployments)
-const clerkProxyUrl = (() => {
-  const proxy = import.meta.env.VITE_CLERK_PROXY_URL as string | undefined;
-  if (!proxy) return undefined;
-  const isDevKey = clerkPubKey?.startsWith("pk_test_");
-  if (isDevKey) return undefined;
-  const isLocalBrowser = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-  if (!isLocalBrowser && proxy.includes("localhost")) return undefined;
-  return proxy;
-})();
+// Empty in dev (Clerk hits dev FAPI directly), auto-set in prod.
+// Do NOT gate on NODE_ENV — the empty dev value is intentional.
+const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 function stripBase(path: string): string {
