@@ -60,16 +60,18 @@ After installing pnpm, **close and reopen your terminal** so it is on the PATH.
 
 | Service | Purpose | Sign up |
 |---|---|---|
-| **Clerk** | User authentication (sign-up, login, Google) | https://dashboard.clerk.com |
 | **Neon** | Cloud PostgreSQL database | https://neon.tech |
 | **Render** | Hosts the API server | https://render.com |
 | **Vercel** | Hosts the React frontend | https://vercel.com |
+
+> **Clerk is auto-provisioned when running in Replit** — keys are set automatically. For local Windows dev, you need your own Clerk account (see below).
 
 eSewa merchant account is only needed for real payments — sandbox works without it.
 
 ### Keys you need before starting
 
-**From Clerk** (`dashboard.clerk.com` → API Keys):
+**From Clerk** (local dev only — skip if using Replit):
+- Go to `dashboard.clerk.com` → your app → API Keys
 - Publishable key — starts with `pk_test_...`
 - Secret key — starts with `sk_test_...`
 
@@ -240,8 +242,11 @@ E → Set up Clerk webhook
 F → Verify
 ```
 
-### Part A — Switch Clerk to production keys
+### Part A — Production Clerk keys
 
+**If using Replit (recommended):** Clerk live keys are swapped in automatically when you publish — no manual steps needed. Skip to Part B.
+
+**If using your own Clerk account (local dev setup):**
 1. https://dashboard.clerk.com → your app → **API Keys**
 2. Toggle **Development → Production** at the top of the page
 3. Copy and save your new keys:
@@ -289,9 +294,9 @@ Click **Create Web Service**. First build takes 3–5 minutes.
 
 **Confirm it's working:**
 ```
-https://YOUR-RENDER-URL.onrender.com/api/healthz
+https://YOUR-RENDER-URL.onrender.com/healthz
 ```
-Must return `{"status":"ok"}` before continuing.
+Must return `{"status":"ok"}` before continuing. (Also available at `/api/healthz` — same response.)
 
 Copy your Render URL (e.g. `https://kc-class-api.onrender.com`) — you need it in Part C.
 
@@ -522,7 +527,9 @@ Open `F12` → Console:
 Windows SSL issue with Neon. Make sure your connection string ends with `?sslmode=require`. The app handles the rest automatically.
 
 **`Failed to load Clerk JS` in browser console**
-You have `VITE_CLERK_PROXY_URL=...` in `artifacts\learn\.env`. Delete that entire line — it only works with production keys on a custom domain.
+Two possible causes:
+- You have `VITE_CLERK_PROXY_URL=...` set in `artifacts\learn\.env`. Delete that entire line — the proxy only works with production live keys (`pk_live_`) on a deployed domain.
+- If using Replit: Clerk keys may not be provisioned yet. The Replit environment auto-provisions them — restart the workflow and reload the preview.
 
 **Sign-in doesn't work**
 The `VITE_CLERK_PUBLISHABLE_KEY` in `artifacts\learn\.env` and `CLERK_PUBLISHABLE_KEY` in `artifacts\api-server\.env` must be **exactly the same** `pk_test_...` value.
@@ -562,8 +569,8 @@ And Start Command:
 node --enable-source-maps ./artifacts/api-server/dist/index.mjs
 ```
 
-**`/api/healthz` returns 502 or times out**
-Render is still cold-starting (~30 seconds on free plan). Wait and retry.
+**`/healthz` returns 502 or times out**
+Render is still cold-starting (~30 seconds on free plan). Wait and retry. Note: Render's internal health check hits `/healthz` (root), while the API also responds at `/api/healthz` — both return `{"status":"ok"}`.
 
 **Sign-in page crashes on Vercel**
 `VITE_CLERK_PUBLISHABLE_KEY` on Vercel must be a `pk_live_...` key (not `pk_test_`). Switch Clerk to Production mode first.

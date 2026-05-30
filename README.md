@@ -156,11 +156,14 @@ Setup required for webhooks: see `DOCS.md → Part 4, Part E`.
 
 All endpoints are prefixed with `/api`. Full OpenAPI spec: `lib/api-spec/openapi.yaml`.
 
-### Public endpoints
+### Health check
 
 | Method | Path | Description |
 |---|---|---|
-| `GET` | `/healthz` | Health check — returns `{ status: "ok" }` |
+| `GET` | `/healthz` | Root-level health check used by Render — returns `{ status: "ok" }` |
+| `GET` | `/api/healthz` | Same check, mounted under the API router |
+
+### Public endpoints
 | `GET` | `/videos` | Latest YouTube channel videos (cached 10 min) |
 | `GET` | `/courses` | Published courses. Supports `?search=` and `?category=` |
 | `GET` | `/courses/:id` | Single course with lesson list |
@@ -270,7 +273,9 @@ pnpm --filter @workspace/api-spec run codegen
 
 **Contract-first API:** `lib/api-spec/openapi.yaml` is the single source of truth. Zod schemas and React Query hooks are generated from it with Orval. Never hand-write API types.
 
-**Clerk auth proxy (production):** Clerk requests are proxied through the Express server (`/api/__clerk`) in production, but this proxy is disabled for development instances (dev keys). Do not set `VITE_CLERK_PROXY_URL` in local development.
+**Clerk auth proxy (production):** Clerk requests are proxied through the Express server (`/api/__clerk`) in production, but this proxy is disabled for development instances (dev keys). `VITE_CLERK_PROXY_URL` is auto-populated in production by Replit; do not set it manually in local development or in development Replit environments.
+
+**Replit-managed Clerk:** When running in Replit, `CLERK_SECRET_KEY`, `CLERK_PUBLISHABLE_KEY`, and `VITE_CLERK_PUBLISHABLE_KEY` are auto-provisioned. Do not hand-edit these values — they are swapped automatically from test keys (`pk_test_`) in dev to live keys (`pk_live_`) on publish.
 
 **Clerk webhook sync:** User data is pushed to the database by Clerk webhooks (`user.created`, `user.updated`, `user.deleted`). The `ensureUser` middleware is a fallback for cases where the webhook has not fired yet.
 
