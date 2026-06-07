@@ -4,14 +4,15 @@ import { useGetAdminStats, useListAdminUsers, useListAdminSubscriptions, useUpda
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, CreditCard, BookOpen, TrendingUp, Check, Download, UserPlus, Activity, BarChart2 } from "lucide-react";
+import { Users, CreditCard, BookOpen, TrendingUp, Check, Download, UserPlus } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
-import { useAuth } from "@clerk/clerk-react";
+import { useAuth } from "@clerk/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,7 +26,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const API = import.meta.env.VITE_API_URL || "";
@@ -118,7 +118,7 @@ export default function AdminDashboard() {
         toast.success(`Role updated to ${role}`);
         queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
       },
-      onError: () => toast.error("Failed to update user role"),
+      onError: () => toast.error("Failed to update role"),
     });
   };
 
@@ -132,232 +132,220 @@ export default function AdminDashboard() {
       a.download = `users-${new Date().toISOString().split("T")[0]}.csv`;
       a.click();
       URL.revokeObjectURL(url);
-      toast.success("CSV downloaded");
+      toast.success("Downloaded");
     } catch {
       toast.error("Export failed");
     }
   };
 
-  // Manual grant dialog
   const [grantDialogOpen, setGrantDialogOpen] = useState(false);
   const [grantUserId, setGrantUserId] = useState("");
   const [grantPlan, setGrantPlan] = useState("monthly");
 
   return (
     <AdminLayout title="Overview">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatCard title="Total Users" value={stats?.totalUsers} icon={<Users className="h-4 w-4" />} isLoading={isStatsLoading} />
-        <StatCard title="Active Subscriptions" value={stats?.activeSubscriptions} icon={<CreditCard className="h-4 w-4" />} isLoading={isStatsLoading} />
-        <StatCard title="Total Courses" value={stats?.totalCourses} icon={<BookOpen className="h-4 w-4" />} isLoading={isStatsLoading} />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+        <StatCard title="Total users" value={stats?.totalUsers} icon={<Users className="h-4 w-4" />} isLoading={isStatsLoading} />
+        <StatCard title="Active subscriptions" value={stats?.activeSubscriptions} icon={<CreditCard className="h-4 w-4" />} isLoading={isStatsLoading} />
+        <StatCard title="Courses" value={stats?.totalCourses} icon={<BookOpen className="h-4 w-4" />} isLoading={isStatsLoading} />
         <StatCard
-          title="Monthly Revenue (NPR)"
+          title="Est. monthly revenue"
           value={stats?.monthlyRevenue != null ? `NPR ${stats.monthlyRevenue.toLocaleString()}` : undefined}
           icon={<TrendingUp className="h-4 w-4" />}
           isLoading={isStatsLoading}
         />
       </div>
 
-      <Tabs defaultValue="users" className="w-full">
-        <TabsList className="flex flex-wrap h-auto gap-1 mb-8 max-w-2xl">
-          <TabsTrigger value="users">Users</TabsTrigger>
-          <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
-          <TabsTrigger value="enrollment">Enrollment</TabsTrigger>
-          <TabsTrigger value="transactions">Transactions</TabsTrigger>
-          <TabsTrigger value="activity">Activity</TabsTrigger>
+      <Tabs defaultValue="users">
+        <TabsList className="h-auto bg-transparent rounded-none border-b border-border w-full justify-start p-0 gap-6 mb-8">
+          {["users", "subscriptions", "enrollment", "transactions", "activity"].map(tab => (
+            <TabsTrigger
+              key={tab}
+              value={tab}
+              className="rounded-none bg-transparent px-0 pb-3 pt-1 capitalize font-medium text-muted-foreground data-[state=active]:text-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-foreground transition-colors"
+            >
+              {tab}
+            </TabsTrigger>
+          ))}
         </TabsList>
 
-        {/* ── USERS TAB ── */}
+        {/* USERS */}
         <TabsContent value="users">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm text-muted-foreground">
+              {!isUsersLoading && users ? `${users.length} registered users` : ""}
+            </p>
+            <Button size="sm" variant="outline" onClick={handleExportCSV} className="gap-2 h-8 text-xs">
+              <Download className="h-3.5 w-3.5" /> Export CSV
+            </Button>
+          </div>
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between flex-wrap gap-2">
-                <span>User Management</span>
-                <div className="flex items-center gap-2">
-                  {!isUsersLoading && users && (
-                    <span className="text-sm font-normal text-muted-foreground">{users.length} users</span>
-                  )}
-                  <Button size="sm" variant="outline" onClick={handleExportCSV} className="gap-2">
-                    <Download className="h-4 w-4" /> Export CSV
-                  </Button>
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               {isUsersLoading ? (
-                <div className="space-y-4">{[1,2,3,4,5].map(i => <Skeleton key={i} className="h-12 w-full" />)}</div>
+                <div className="p-6 space-y-3">{[1,2,3,4,5].map(i => <Skeleton key={i} className="h-10 w-full" />)}</div>
               ) : !users || users.length === 0 ? (
-                <div className="text-center py-10 text-muted-foreground text-sm">No users yet.</div>
+                <div className="text-center py-16 text-sm text-muted-foreground">No users yet.</div>
               ) : (
-                <div className="rounded-md border overflow-x-auto">
-                  <table className="w-full text-sm text-left">
-                    <thead className="bg-zinc-50 dark:bg-zinc-900 text-muted-foreground">
-                      <tr>
-                        <th className="px-4 py-3 font-medium">Name</th>
-                        <th className="px-4 py-3 font-medium">Email</th>
-                        <th className="px-4 py-3 font-medium">Role</th>
-                        <th className="px-4 py-3 font-medium">Status</th>
-                        <th className="px-4 py-3 font-medium">Joined</th>
-                        <th className="px-4 py-3 font-medium text-right">Actions</th>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="px-5 py-3 text-left text-xs font-medium text-muted-foreground">Name</th>
+                      <th className="px-5 py-3 text-left text-xs font-medium text-muted-foreground">Email</th>
+                      <th className="px-5 py-3 text-left text-xs font-medium text-muted-foreground">Role</th>
+                      <th className="px-5 py-3 text-left text-xs font-medium text-muted-foreground">Plan</th>
+                      <th className="px-5 py-3 text-left text-xs font-medium text-muted-foreground">Joined</th>
+                      <th className="px-5 py-3" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users.map((user, i) => (
+                      <tr key={user.clerkId} className={`hover:bg-muted/40 transition-colors ${i < users.length - 1 ? "border-b" : ""}`}>
+                        <td className="px-5 py-3 font-medium">{user.name || <span className="text-muted-foreground italic">No name</span>}</td>
+                        <td className="px-5 py-3 text-muted-foreground">{user.email}</td>
+                        <td className="px-5 py-3">
+                          {user.role === "admin" ? (
+                            <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">Admin</span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">User</span>
+                          )}
+                        </td>
+                        <td className="px-5 py-3">
+                          {user.subscriptionStatus === "active" ? (
+                            <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Premium</span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">Free</span>
+                          )}
+                        </td>
+                        <td className="px-5 py-3 text-muted-foreground text-xs">
+                          {format(new Date(user.createdAt), "MMM d, yyyy")}
+                        </td>
+                        <td className="px-5 py-3 text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-7 text-xs">Actions</Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-44">
+                              <DropdownMenuItem onClick={() => handleRoleChange(user.clerkId, "user")}>
+                                Set as user {user.role === "user" && <Check className="ml-auto h-3.5 w-3.5" />}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleRoleChange(user.clerkId, "admin")} className="text-red-600 focus:text-red-600">
+                                Set as admin {user.role === "admin" && <Check className="ml-auto h-3.5 w-3.5" />}
+                              </DropdownMenuItem>
+                              {user.subscriptionStatus !== "active" ? (
+                                <DropdownMenuItem onClick={() => { setGrantUserId(user.clerkId); setGrantDialogOpen(true); }} className="text-emerald-600 focus:text-emerald-600">
+                                  Grant premium access
+                                </DropdownMenuItem>
+                              ) : (
+                                <DropdownMenuItem onClick={() => revokeSubMutation.mutate(user.clerkId)} className="text-amber-600 focus:text-amber-600">
+                                  Revoke premium access
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {users.map(user => (
-                        <tr key={user.clerkId} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/50">
-                          <td className="px-4 py-3 font-medium">{user.name || "—"}</td>
-                          <td className="px-4 py-3 text-muted-foreground">{user.email}</td>
-                          <td className="px-4 py-3">
-                            <Badge variant={user.role === 'admin' ? 'default' : 'secondary'} className="capitalize">
-                              {user.role}
-                            </Badge>
-                          </td>
-                          <td className="px-4 py-3">
-                            {user.subscriptionStatus === 'active' ? (
-                              <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-0">Premium</Badge>
-                            ) : (
-                              <span className="text-muted-foreground text-xs uppercase tracking-wider">Free</span>
-                            )}
-                          </td>
-                          <td className="px-4 py-3 text-muted-foreground">
-                            {format(new Date(user.createdAt), "MMM d, yyyy")}
-                          </td>
-                          <td className="px-4 py-3 text-right">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm">Actions</Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleRoleChange(user.clerkId, "user")}>
-                                  Set to User {user.role === "user" && <Check className="ml-auto h-4 w-4" />}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleRoleChange(user.clerkId, "admin")} className="text-red-600 focus:text-red-600">
-                                  Set to Admin {user.role === "admin" && <Check className="ml-auto h-4 w-4" />}
-                                </DropdownMenuItem>
-                                {user.subscriptionStatus !== "active" && (
-                                  <DropdownMenuItem onClick={() => { setGrantUserId(user.clerkId); setGrantDialogOpen(true); }} className="text-emerald-600 focus:text-emerald-600">
-                                    Grant Premium
-                                  </DropdownMenuItem>
-                                )}
-                                {user.subscriptionStatus === "active" && (
-                                  <DropdownMenuItem onClick={() => revokeSubMutation.mutate(user.clerkId)} className="text-amber-600 focus:text-amber-600">
-                                    Revoke Premium
-                                  </DropdownMenuItem>
-                                )}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                    ))}
+                  </tbody>
+                </table>
               )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* ── SUBSCRIPTIONS TAB ── */}
+        {/* SUBSCRIPTIONS */}
         <TabsContent value="subscriptions">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm text-muted-foreground">
+              {!isSubsLoading && subscriptions ? `${(subscriptions as any[]).length} total records` : ""}
+            </p>
+            <Button size="sm" onClick={() => { setGrantUserId(""); setGrantDialogOpen(true); }} className="gap-2 h-8 text-xs bg-emerald-600 hover:bg-emerald-700">
+              <UserPlus className="h-3.5 w-3.5" /> Grant access manually
+            </Button>
+          </div>
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between flex-wrap gap-2">
-                <span>Subscriptions</span>
-                <Button size="sm" onClick={() => { setGrantUserId(""); setGrantDialogOpen(true); }} className="gap-2 bg-emerald-600 hover:bg-emerald-700">
-                  <UserPlus className="h-4 w-4" /> Grant Manual Access
-                </Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               {isSubsLoading ? (
-                <div className="space-y-4">{[1,2,3].map(i => <Skeleton key={i} className="h-12 w-full" />)}</div>
+                <div className="p-6 space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-10 w-full" />)}</div>
               ) : !subscriptions || (subscriptions as any[]).length === 0 ? (
-                <div className="text-center py-10 text-muted-foreground text-sm">No subscriptions yet.</div>
+                <div className="text-center py-16 text-sm text-muted-foreground">No subscriptions yet.</div>
               ) : (
-                <div className="rounded-md border overflow-x-auto">
-                  <table className="w-full text-sm text-left">
-                    <thead className="bg-zinc-50 dark:bg-zinc-900 text-muted-foreground">
-                      <tr>
-                        <th className="px-4 py-3 font-medium">User</th>
-                        <th className="px-4 py-3 font-medium">Plan</th>
-                        <th className="px-4 py-3 font-medium">Status</th>
-                        <th className="px-4 py-3 font-medium">Expires</th>
-                        <th className="px-4 py-3 font-medium text-right">Actions</th>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="px-5 py-3 text-left text-xs font-medium text-muted-foreground">User</th>
+                      <th className="px-5 py-3 text-left text-xs font-medium text-muted-foreground">Plan</th>
+                      <th className="px-5 py-3 text-left text-xs font-medium text-muted-foreground">Status</th>
+                      <th className="px-5 py-3 text-left text-xs font-medium text-muted-foreground">Expires</th>
+                      <th className="px-5 py-3" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(subscriptions as any[]).map((sub, i, arr) => (
+                      <tr key={sub.id} className={`hover:bg-muted/40 transition-colors ${i < arr.length - 1 ? "border-b" : ""}`}>
+                        <td className="px-5 py-3">
+                          <div className="font-medium">{sub.userName || "—"}</div>
+                          <div className="text-xs text-muted-foreground mt-0.5">{sub.userEmail}</div>
+                        </td>
+                        <td className="px-5 py-3 capitalize text-sm">{sub.plan}</td>
+                        <td className="px-5 py-3">
+                          <span className={`text-xs font-semibold ${sub.status === "active" ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}>
+                            {sub.status}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3 text-muted-foreground text-xs">
+                          {sub.currentPeriodEnd ? format(new Date(sub.currentPeriodEnd), "MMM d, yyyy") : "—"}
+                        </td>
+                        <td className="px-5 py-3 text-right">
+                          {sub.status === "active" ? (
+                            <Button size="sm" variant="ghost" className="h-7 text-xs text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950" onClick={() => revokeSubMutation.mutate(sub.userId)}>
+                              Revoke
+                            </Button>
+                          ) : (
+                            <Button size="sm" variant="ghost" className="h-7 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950" onClick={() => { setGrantUserId(sub.userId); setGrantDialogOpen(true); }}>
+                              Grant
+                            </Button>
+                          )}
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {(subscriptions as any[]).map(sub => (
-                        <tr key={sub.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/50">
-                          <td className="px-4 py-3">
-                            <div className="font-medium text-sm">{sub.userName || "—"}</div>
-                            <div className="text-xs text-muted-foreground">{sub.userEmail || sub.userId}</div>
-                          </td>
-                          <td className="px-4 py-3 capitalize font-medium">{sub.plan}</td>
-                          <td className="px-4 py-3">
-                            <Badge className={sub.status === 'active' ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-zinc-400 hover:bg-zinc-500'}>
-                              {sub.status}
-                            </Badge>
-                          </td>
-                          <td className="px-4 py-3 text-muted-foreground">
-                            {sub.currentPeriodEnd ? format(new Date(sub.currentPeriodEnd), "MMM d, yyyy") : "—"}
-                          </td>
-                          <td className="px-4 py-3 text-right">
-                            {sub.status === "active" ? (
-                              <Button size="sm" variant="outline" className="text-amber-600 border-amber-200 hover:bg-amber-50" onClick={() => revokeSubMutation.mutate(sub.userId)}>
-                                Revoke
-                              </Button>
-                            ) : (
-                              <Button size="sm" variant="outline" className="text-emerald-600 border-emerald-200 hover:bg-emerald-50" onClick={() => { setGrantUserId(sub.userId); setGrantDialogOpen(true); }}>
-                                Grant
-                              </Button>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                    ))}
+                  </tbody>
+                </table>
               )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* ── ENROLLMENT TAB ── */}
+        {/* ENROLLMENT */}
         <TabsContent value="enrollment">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart2 className="h-5 w-5 text-indigo-500" />
-                Course Enrollment Stats
-              </CardTitle>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base font-semibold">Course enrollment</CardTitle>
+              <p className="text-sm text-muted-foreground">Unique students who have started each course.</p>
             </CardHeader>
             <CardContent>
               {isEnrollmentLoading ? (
-                <div className="space-y-4">{[1,2,3,4].map(i => <Skeleton key={i} className="h-14 w-full" />)}</div>
+                <div className="space-y-4">{[1,2,3,4].map(i => <Skeleton key={i} className="h-10 w-full" />)}</div>
               ) : !enrollmentStats || enrollmentStats.length === 0 ? (
-                <div className="text-center py-10 text-muted-foreground text-sm">No enrollment data yet.</div>
+                <div className="text-center py-12 text-sm text-muted-foreground">No enrollment data yet.</div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-5">
                   {enrollmentStats.map((c: any) => {
                     const max = Math.max(...enrollmentStats.map((x: any) => x.enrollments), 1);
                     const pct = Math.round((c.enrollments / max) * 100);
                     return (
-                      <div key={c.courseId} className="flex items-center gap-4">
-                        <div className="w-48 shrink-0 text-sm font-medium truncate">{c.title}</div>
-                        <div className="flex-1 bg-zinc-100 dark:bg-zinc-800 rounded-full h-3 overflow-hidden">
-                          <div
-                            className="h-full bg-indigo-500 rounded-full transition-all"
-                            style={{ width: `${pct}%` }}
-                          />
+                      <div key={c.courseId}>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium">{c.title}</span>
+                            {!c.isPublished && <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-500 font-medium">Draft</span>}
+                          </div>
+                          <span className="text-sm tabular-nums text-muted-foreground">
+                            <span className="font-semibold text-foreground">{c.enrollments}</span> students
+                          </span>
                         </div>
-                        <div className="w-24 text-right text-sm text-muted-foreground">
-                          <span className="font-bold text-foreground">{c.enrollments}</span> students
+                        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                          <div className="h-full bg-indigo-500 rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
                         </div>
-                        <div className="w-20 text-right text-xs text-muted-foreground">
-                          {c.lessonsCompleted} completions
-                        </div>
-                        {!c.isPublished && (
-                          <Badge variant="secondary" className="text-[10px] shrink-0">Draft</Badge>
-                        )}
                       </div>
                     );
                   })}
@@ -367,96 +355,92 @@ export default function AdminDashboard() {
           </Card>
         </TabsContent>
 
-        {/* ── TRANSACTIONS TAB ── */}
+        {/* TRANSACTIONS */}
         <TabsContent value="transactions">
           <Card>
-            <CardHeader>
-              <CardTitle>eSewa Transaction Log</CardTitle>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base font-semibold">eSewa transactions</CardTitle>
+              <p className="text-sm text-muted-foreground">All subscription records with payment reference IDs.</p>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               {isSubsLoading ? (
-                <div className="space-y-4">{[1,2,3].map(i => <Skeleton key={i} className="h-12 w-full" />)}</div>
+                <div className="p-6 space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-10 w-full" />)}</div>
               ) : !subscriptions || (subscriptions as any[]).length === 0 ? (
-                <div className="text-center py-10 text-muted-foreground text-sm">No transactions yet.</div>
+                <div className="text-center py-16 text-sm text-muted-foreground">No transactions yet.</div>
               ) : (
-                <div className="rounded-md border overflow-x-auto">
-                  <table className="w-full text-sm text-left">
-                    <thead className="bg-zinc-50 dark:bg-zinc-900 text-muted-foreground">
-                      <tr>
-                        <th className="px-4 py-3 font-medium">User</th>
-                        <th className="px-4 py-3 font-medium">eSewa Tx ID</th>
-                        <th className="px-4 py-3 font-medium">Plan</th>
-                        <th className="px-4 py-3 font-medium">Status</th>
-                        <th className="px-4 py-3 font-medium">Date</th>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="px-5 py-3 text-left text-xs font-medium text-muted-foreground">User</th>
+                      <th className="px-5 py-3 text-left text-xs font-medium text-muted-foreground">Transaction ID</th>
+                      <th className="px-5 py-3 text-left text-xs font-medium text-muted-foreground">Plan</th>
+                      <th className="px-5 py-3 text-left text-xs font-medium text-muted-foreground">Status</th>
+                      <th className="px-5 py-3 text-left text-xs font-medium text-muted-foreground">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(subscriptions as any[]).map((sub, i, arr) => (
+                      <tr key={sub.id} className={`hover:bg-muted/40 transition-colors ${i < arr.length - 1 ? "border-b" : ""}`}>
+                        <td className="px-5 py-3">
+                          <div className="font-medium">{sub.userName || "—"}</div>
+                          <div className="text-xs text-muted-foreground mt-0.5">{sub.userEmail}</div>
+                        </td>
+                        <td className="px-5 py-3">
+                          {sub.esewaTransactionId ? (
+                            <code className="text-xs bg-muted px-2 py-0.5 rounded font-mono">{sub.esewaTransactionId}</code>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </td>
+                        <td className="px-5 py-3 capitalize text-sm">{sub.plan}</td>
+                        <td className="px-5 py-3">
+                          <span className={`text-xs font-semibold ${sub.status === "active" ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}>
+                            {sub.status}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3 text-muted-foreground text-xs">
+                          {format(new Date(sub.createdAt), "MMM d, yyyy")}
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {(subscriptions as any[]).map(sub => (
-                        <tr key={sub.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/50">
-                          <td className="px-4 py-3">
-                            <div className="font-medium">{sub.userName || "—"}</div>
-                            <div className="text-xs text-muted-foreground">{sub.userEmail || sub.userId}</div>
-                          </td>
-                          <td className="px-4 py-3 font-mono text-xs">
-                            {sub.esewaTransactionId ? (
-                              <span className="bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded">{sub.esewaTransactionId}</span>
-                            ) : (
-                              <span className="text-muted-foreground italic">Manual / None</span>
-                            )}
-                          </td>
-                          <td className="px-4 py-3 capitalize">{sub.plan}</td>
-                          <td className="px-4 py-3">
-                            <Badge className={sub.status === "active" ? "bg-emerald-500" : "bg-zinc-400"}>
-                              {sub.status}
-                            </Badge>
-                          </td>
-                          <td className="px-4 py-3 text-muted-foreground">
-                            {format(new Date(sub.createdAt), "MMM d, yyyy")}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                    ))}
+                  </tbody>
+                </table>
               )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* ── ACTIVITY TAB ── */}
+        {/* ACTIVITY */}
         <TabsContent value="activity">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5 text-emerald-500" />
-                Recent Activity
-              </CardTitle>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base font-semibold">Recent activity</CardTitle>
+              <p className="text-sm text-muted-foreground">Latest signups and subscription changes.</p>
             </CardHeader>
             <CardContent>
               {isActivityLoading ? (
-                <div className="space-y-4">{[1,2,3,4,5].map(i => <Skeleton key={i} className="h-12 w-full" />)}</div>
+                <div className="space-y-4">{[1,2,3,4,5].map(i => <Skeleton key={i} className="h-10 w-full" />)}</div>
               ) : !activityData || activityData.length === 0 ? (
-                <div className="text-center py-10 text-muted-foreground text-sm">No activity yet.</div>
+                <div className="text-center py-12 text-sm text-muted-foreground">No activity yet.</div>
               ) : (
-                <div className="space-y-1">
-                  {activityData.map((event: any, i: number) => (
-                    <div key={i} className="flex items-start gap-4 px-3 py-3 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors">
-                      <div className={`mt-0.5 h-8 w-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${
-                        event.type === "user_joined"
-                          ? "bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400"
-                          : "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
-                      }`}>
-                        {event.type === "user_joined" ? <Users className="h-4 w-4" /> : <CreditCard className="h-4 w-4" />}
+                <div className="relative">
+                  <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border" />
+                  <div className="space-y-5 pl-6">
+                    {activityData.map((event: any, i: number) => (
+                      <div key={i} className="relative">
+                        <div className="absolute -left-6 top-1 h-3.5 w-3.5 rounded-full border-2 border-background bg-muted ring-1 ring-border" />
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <div className="text-sm font-medium leading-snug">{event.description}</div>
+                            <div className="text-xs text-muted-foreground mt-0.5">{event.detail}</div>
+                          </div>
+                          <div className="text-xs text-muted-foreground shrink-0 mt-0.5">
+                            {format(new Date(event.at), "MMM d, h:mm a")}
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium truncate">{event.description}</div>
-                        <div className="text-xs text-muted-foreground">{event.detail}</div>
-                      </div>
-                      <div className="text-xs text-muted-foreground shrink-0">
-                        {format(new Date(event.at), "MMM d, h:mm a")}
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               )}
             </CardContent>
@@ -464,33 +448,32 @@ export default function AdminDashboard() {
         </TabsContent>
       </Tabs>
 
-      {/* ── GRANT SUBSCRIPTION DIALOG ── */}
+      {/* GRANT DIALOG */}
       <Dialog open={grantDialogOpen} onOpenChange={setGrantDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Grant Premium Access</DialogTitle>
+            <DialogTitle>Grant premium access</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label>User ID (Clerk ID)</Label>
+            <div className="space-y-1.5">
+              <Label className="text-sm">User ID</Label>
               <Input
                 value={grantUserId}
                 onChange={e => setGrantUserId(e.target.value)}
-                placeholder="user_2xyz..."
+                placeholder="user_2xyz…"
+                className="font-mono text-sm"
               />
-              <p className="text-xs text-muted-foreground">
-                Find this in the Users tab. It starts with <code>user_</code>.
-              </p>
+              <p className="text-xs text-muted-foreground">Find the Clerk ID in the Users tab.</p>
             </div>
-            <div className="space-y-2">
-              <Label>Plan</Label>
+            <div className="space-y-1.5">
+              <Label className="text-sm">Duration</Label>
               <Select value={grantPlan} onValueChange={setGrantPlan}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="monthly">Monthly (30 days)</SelectItem>
-                  <SelectItem value="yearly">Yearly (365 days)</SelectItem>
+                  <SelectItem value="monthly">Monthly — 30 days</SelectItem>
+                  <SelectItem value="yearly">Yearly — 365 days</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -498,15 +481,10 @@ export default function AdminDashboard() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setGrantDialogOpen(false)}>Cancel</Button>
             <Button
-              className="bg-emerald-600 hover:bg-emerald-700"
               disabled={!grantUserId.trim() || grantSubMutation.isPending}
-              onClick={() => {
-                grantSubMutation.mutate({ userId: grantUserId.trim(), plan: grantPlan }, {
-                  onSuccess: () => setGrantDialogOpen(false),
-                });
-              }}
+              onClick={() => grantSubMutation.mutate({ userId: grantUserId.trim(), plan: grantPlan }, { onSuccess: () => setGrantDialogOpen(false) })}
             >
-              {grantSubMutation.isPending ? "Granting..." : "Grant Access"}
+              {grantSubMutation.isPending ? "Granting…" : "Grant access"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -515,32 +493,20 @@ export default function AdminDashboard() {
   );
 }
 
-function StatCard({
-  title,
-  value,
-  icon,
-  isLoading,
-}: {
-  title: string;
-  value: string | number | undefined;
-  icon: React.ReactNode;
-  isLoading: boolean;
+function StatCard({ title, value, icon, isLoading }: {
+  title: string; value: string | number | undefined; icon: React.ReactNode; isLoading: boolean;
 }) {
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-        <div className="text-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 p-2 rounded-md">
-          {icon}
+      <CardContent className="pt-5 pb-5">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-xs font-medium text-muted-foreground">{title}</p>
+          <div className="text-muted-foreground/60">{icon}</div>
         </div>
-      </CardHeader>
-      <CardContent>
         {isLoading ? (
-          <Skeleton className="h-8 w-24" />
-        ) : value == null ? (
-          <div className="text-2xl font-bold text-muted-foreground">—</div>
+          <Skeleton className="h-7 w-20" />
         ) : (
-          <div className="text-2xl font-bold">{value}</div>
+          <p className="text-2xl font-bold tracking-tight">{value ?? "—"}</p>
         )}
       </CardContent>
     </Card>

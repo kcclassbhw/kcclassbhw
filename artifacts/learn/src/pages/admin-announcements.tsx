@@ -3,15 +3,15 @@ import AdminLayout from "@/components/admin-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
-import { Megaphone, Trash2, ToggleLeft, ToggleRight, Plus, Info, AlertTriangle, CheckCircle } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Trash2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@clerk/clerk-react";
+import { useAuth } from "@clerk/react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
+import { Switch } from "@/components/ui/switch";
 
 const API = import.meta.env.VITE_API_URL || "";
 
@@ -27,10 +27,10 @@ async function authedFetch(getToken: () => Promise<string | null>, url: string, 
   });
 }
 
-const TYPE_STYLES = {
-  info: { label: "Info", icon: <Info className="h-4 w-4" />, badge: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400", bar: "bg-sky-500" },
-  warning: { label: "Warning", icon: <AlertTriangle className="h-4 w-4" />, badge: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400", bar: "bg-amber-500" },
-  success: { label: "Success", icon: <CheckCircle className="h-4 w-4" />, badge: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400", bar: "bg-emerald-500" },
+const TYPE_CONFIG = {
+  info:    { label: "Info",    color: "bg-sky-500"    },
+  warning: { label: "Warning", color: "bg-amber-500"  },
+  success: { label: "Success", color: "bg-emerald-500" },
 };
 
 export default function AdminAnnouncements() {
@@ -59,11 +59,11 @@ export default function AdminAnnouncements() {
       return r.json();
     },
     onSuccess: () => {
-      toast.success("Announcement created");
+      toast.success("Announcement posted");
       setMessage("");
       queryClient.invalidateQueries({ queryKey: ["adminAnnouncements"] });
     },
-    onError: () => toast.error("Failed to create announcement"),
+    onError: () => toast.error("Failed to post announcement"),
   });
 
   const toggleMutation = useMutation({
@@ -76,167 +76,129 @@ export default function AdminAnnouncements() {
       if (!r.ok) throw new Error("Failed");
       return r.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["adminAnnouncements"] });
-    },
-    onError: () => toast.error("Failed to update announcement"),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["adminAnnouncements"] }),
+    onError: () => toast.error("Failed to update"),
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      const r = await authedFetch(getToken, `${API}/api/admin/announcements/${id}`, {
-        method: "DELETE",
-      });
+      const r = await authedFetch(getToken, `${API}/api/admin/announcements/${id}`, { method: "DELETE" });
       if (!r.ok) throw new Error("Failed");
       return r.json();
     },
     onSuccess: () => {
-      toast.success("Announcement deleted");
+      toast.success("Deleted");
       queryClient.invalidateQueries({ queryKey: ["adminAnnouncements"] });
     },
-    onError: () => toast.error("Failed to delete announcement"),
+    onError: () => toast.error("Failed to delete"),
   });
-
-  const handleCreate = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!message.trim()) return;
-    createMutation.mutate({ message: message.trim(), type });
-  };
 
   return (
     <AdminLayout title="Announcements">
-      <p className="text-muted-foreground mb-8 -mt-4">
-        Post banners that appear at the top of the homepage for all visitors.
+      <p className="text-muted-foreground text-sm mb-8 -mt-4">
+        Post a banner that appears at the top of the homepage for all visitors.
       </p>
 
-      {/* Create Form */}
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Plus className="h-5 w-5 text-indigo-500" />
-            New Announcement
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleCreate} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="msg">Message</Label>
-              <Input
-                id="msg"
-                value={message}
-                onChange={e => setMessage(e.target.value)}
-                placeholder="e.g. Exam season is here — new mock papers added!"
-                required
-              />
-            </div>
-            <div className="flex items-end gap-4">
-              <div className="space-y-2 flex-1">
-                <Label>Type</Label>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Create form */}
+        <Card>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <Plus className="h-4 w-4" /> New announcement
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form
+              onSubmit={e => { e.preventDefault(); if (message.trim()) createMutation.mutate({ message: message.trim(), type }); }}
+              className="space-y-4"
+            >
+              <div className="space-y-1.5">
+                <Label className="text-sm">Message</Label>
+                <Input
+                  value={message}
+                  onChange={e => setMessage(e.target.value)}
+                  placeholder="e.g. New mock papers added for 2025 exam season!"
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-sm">Type</Label>
                 <Select value={type} onValueChange={setType}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="info">Info (Blue)</SelectItem>
-                    <SelectItem value="warning">Warning (Amber)</SelectItem>
-                    <SelectItem value="success">Success (Green)</SelectItem>
+                    <SelectItem value="info">Info (blue)</SelectItem>
+                    <SelectItem value="warning">Warning (amber)</SelectItem>
+                    <SelectItem value="success">Success (green)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <Button type="submit" disabled={!message.trim() || createMutation.isPending} className="bg-indigo-600 hover:bg-indigo-700">
-                {createMutation.isPending ? "Posting..." : "Post Announcement"}
+
+              {message.trim() && (
+                <div className="rounded-lg overflow-hidden border">
+                  <div className="text-[10px] font-semibold text-muted-foreground px-3 py-1.5 border-b bg-muted/50">Preview</div>
+                  <div className={`${TYPE_CONFIG[type as keyof typeof TYPE_CONFIG]?.color ?? "bg-sky-500"} px-4 py-2.5 text-white text-sm font-medium text-center`}>
+                    {message}
+                  </div>
+                </div>
+              )}
+
+              <Button type="submit" disabled={!message.trim() || createMutation.isPending} className="w-full">
+                {createMutation.isPending ? "Posting…" : "Post announcement"}
               </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+            </form>
+          </CardContent>
+        </Card>
 
-      {/* Preview */}
-      {message.trim() && (
-        <div className="mb-6">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">Preview</p>
-          <div className={`${TYPE_STYLES[type as keyof typeof TYPE_STYLES]?.bar || "bg-sky-500"} text-white px-4 py-3 flex items-center justify-center gap-3 text-sm font-semibold rounded-lg`}>
-            {TYPE_STYLES[type as keyof typeof TYPE_STYLES]?.icon}
-            <span>{message}</span>
-          </div>
-        </div>
-      )}
+        {/* List */}
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-muted-foreground">Posted announcements</h3>
 
-      {/* Announcements List */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Megaphone className="h-5 w-5 text-indigo-500" />
-            All Announcements
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
           {isLoading ? (
-            <div className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full" />)}</div>
+            <div className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}</div>
           ) : !announcements || announcements.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Megaphone className="h-10 w-10 mx-auto mb-3 opacity-20" />
-              <p className="text-sm">No announcements yet. Create one above.</p>
+            <div className="rounded-xl border border-dashed py-12 text-center text-sm text-muted-foreground">
+              No announcements yet.
             </div>
           ) : (
-            <div className="space-y-3">
-              {announcements.map((a: any) => {
-                const style = TYPE_STYLES[a.type as keyof typeof TYPE_STYLES] ?? TYPE_STYLES.info;
-                return (
-                  <div
-                    key={a.id}
-                    className={`flex items-start gap-4 p-4 rounded-xl border transition-all ${
-                      a.is_active ? "bg-card" : "bg-zinc-50 dark:bg-zinc-900/30 opacity-60"
-                    }`}
-                  >
-                    <div className={`mt-0.5 p-2 rounded-lg ${style.badge} shrink-0`}>
-                      {style.icon}
-                    </div>
+            announcements.map((a: any) => {
+              const cfg = TYPE_CONFIG[a.type as keyof typeof TYPE_CONFIG] ?? TYPE_CONFIG.info;
+              return (
+                <div
+                  key={a.id}
+                  className={`rounded-xl border p-4 transition-opacity ${a.is_active ? "" : "opacity-50"}`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={`mt-0.5 h-2 w-2 rounded-full shrink-0 ${cfg.color}`} />
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span className="text-sm font-semibold">{a.message}</span>
-                        <Badge variant={a.is_active ? "default" : "secondary"} className="text-[10px] shrink-0">
-                          {a.is_active ? "Active" : "Inactive"}
-                        </Badge>
-                        <span className={`text-xs px-1.5 py-0.5 rounded font-medium shrink-0 ${style.badge}`}>
-                          {style.label}
-                        </span>
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        Posted {format(new Date(a.created_at), "MMM d, yyyy 'at' h:mm a")}
-                      </div>
+                      <p className="text-sm font-medium leading-snug">{a.message}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {cfg.label} · {format(new Date(a.created_at), "MMM d, yyyy")}
+                      </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
+                      <Switch
+                        checked={a.is_active}
+                        onCheckedChange={checked => toggleMutation.mutate({ id: a.id, isActive: checked })}
+                        aria-label="Toggle active"
+                      />
                       <Button
                         variant="ghost"
                         size="icon"
-                        title={a.is_active ? "Deactivate" : "Activate"}
-                        onClick={() => toggleMutation.mutate({ id: a.id, isActive: !a.is_active })}
-                        disabled={toggleMutation.isPending}
-                        className={a.is_active ? "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" : "text-zinc-400 hover:text-zinc-600"}
+                        className="h-7 w-7 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950"
+                        onClick={() => { if (confirm("Delete this announcement?")) deleteMutation.mutate(a.id); }}
                       >
-                        {a.is_active ? <ToggleRight className="h-5 w-5" /> : <ToggleLeft className="h-5 w-5" />}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        title="Delete"
-                        className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
-                        onClick={() => {
-                          if (confirm("Delete this announcement?")) deleteMutation.mutate(a.id);
-                        }}
-                        disabled={deleteMutation.isPending}
-                      >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </AdminLayout>
   );
 }
