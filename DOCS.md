@@ -294,7 +294,7 @@ Click **Create Web Service**. First build takes 3–5 minutes.
 
 **Confirm it's working:**
 ```
-https://YOUR-RENDER-URL.onrender.com/healthz
+https://kcclassbhw.onrender.com/healthz
 ```
 Must return `{"status":"ok"}` before continuing. (Also available at `/api/healthz` — same response.)
 
@@ -345,7 +345,7 @@ This syncs new sign-ups to your database instantly.
 
 1. https://dashboard.clerk.com → **Webhooks** → **Add Endpoint**
 2. Set:
-   - **URL:** `https://YOUR-RENDER-URL.onrender.com/api/webhooks/clerk`
+   - **URL:** `https://kcclassbhw.onrender.com/api/webhooks/clerk`
    - **Events:** check `user.created`, `user.updated`, `user.deleted`
 3. Click **Create Endpoint** → copy the **Signing Secret** (`whsec_...`)
 4. Go to Render → **Environment** → add:
@@ -502,7 +502,7 @@ Push to `main` on GitHub — both Render and Vercel rebuild automatically.
 | Variable | Local dev | Production (Vercel) |
 |---|---|---|
 | `VITE_CLERK_PUBLISHABLE_KEY` | `pk_test_...` | `pk_live_...` |
-| `VITE_API_URL` | `http://localhost:8080` | `https://your-api.onrender.com` |
+| `VITE_API_URL` | `http://localhost:8080` | `https://kcclassbhw.onrender.com` |
 | `PORT` | `3000` | *(not used — Vercel handles this)* |
 | `BASE_PATH` | `/` | `/` |
 
