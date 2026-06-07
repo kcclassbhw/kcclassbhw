@@ -4,11 +4,12 @@ import { useGetAdminStats, useListAdminUsers, useListAdminSubscriptions, useUpda
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, CreditCard, BookOpen, Video, FileText, TrendingUp, ShieldAlert, Check } from "lucide-react";
+import { Users, CreditCard, BookOpen, TrendingUp, Check } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,20 +18,26 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export default function AdminDashboard() {
-  const { data: stats, isLoading: isStatsLoading } = useGetAdminStats();
-  const { data: users, isLoading: isUsersLoading, refetch: refetchUsers } = useListAdminUsers();
-  const { data: subscriptions, isLoading: isSubsLoading } = useListAdminSubscriptions();
+  const queryClient = useQueryClient();
+
+  const { data: stats, isLoading: isStatsLoading } = useGetAdminStats({
+    query: { refetchInterval: 30_000, queryKey: ["adminStats"] },
+  });
+  const { data: users, isLoading: isUsersLoading } = useListAdminUsers({
+    query: { refetchInterval: 30_000, queryKey: ["adminUsers"] },
+  });
+  const { data: subscriptions, isLoading: isSubsLoading } = useListAdminSubscriptions({
+    query: { refetchInterval: 30_000, queryKey: ["adminSubs"] },
+  });
   const updateRoleMutation = useUpdateUserRole();
 
   const handleRoleChange = (clerkId: string, role: string) => {
     updateRoleMutation.mutate({ clerkId, data: { role } }, {
       onSuccess: () => {
-        toast.success(`User role updated to ${role}`);
-        refetchUsers();
+        toast.success(`Role updated to ${role}`);
+        queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
       },
-      onError: () => {
-        toast.error("Failed to update user role");
-      }
+      onError: () => toast.error("Failed to update user role"),
     });
   };
 
@@ -38,10 +45,30 @@ export default function AdminDashboard() {
     <AdminLayout title="Overview">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatCard title="Total Users" value={stats?.totalUsers} icon={<Users className="h-4 w-4" />} isLoading={isStatsLoading} />
-        <StatCard title="Active Subscriptions" value={stats?.activeSubscriptions} icon={<CreditCard className="h-4 w-4" />} isLoading={isStatsLoading} />
-        <StatCard title="Total Courses" value={stats?.totalCourses} icon={<BookOpen className="h-4 w-4" />} isLoading={isStatsLoading} />
-        <StatCard title="Monthly Revenue (NPR)" value={`NPR ${(stats?.monthlyRevenue || 0).toLocaleString()}`} icon={<TrendingUp className="h-4 w-4" />} isLoading={isStatsLoading} />
+        <StatCard
+          title="Total Users"
+          value={stats?.totalUsers}
+          icon={<Users className="h-4 w-4" />}
+          isLoading={isStatsLoading}
+        />
+        <StatCard
+          title="Active Subscriptions"
+          value={stats?.activeSubscriptions}
+          icon={<CreditCard className="h-4 w-4" />}
+          isLoading={isStatsLoading}
+        />
+        <StatCard
+          title="Total Courses"
+          value={stats?.totalCourses}
+          icon={<BookOpen className="h-4 w-4" />}
+          isLoading={isStatsLoading}
+        />
+        <StatCard
+          title="Monthly Revenue (NPR)"
+          value={stats?.monthlyRevenue != null ? `NPR ${stats.monthlyRevenue.toLocaleString()}` : undefined}
+          icon={<TrendingUp className="h-4 w-4" />}
+          isLoading={isStatsLoading}
+        />
       </div>
 
       <Tabs defaultValue="users" className="w-full">
@@ -49,17 +76,24 @@ export default function AdminDashboard() {
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="users">
           <Card>
             <CardHeader>
-              <CardTitle>User Management</CardTitle>
+              <CardTitle className="flex items-center justify-between">
+                <span>User Management</span>
+                {!isUsersLoading && users && (
+                  <span className="text-sm font-normal text-muted-foreground">{users.length} users</span>
+                )}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {isUsersLoading ? (
                 <div className="space-y-4">
                   {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-12 w-full" />)}
                 </div>
+              ) : !users || users.length === 0 ? (
+                <div className="text-center py-10 text-muted-foreground text-sm">No users yet.</div>
               ) : (
                 <div className="rounded-md border overflow-x-auto">
                   <table className="w-full text-sm text-left">
@@ -74,9 +108,9 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                      {users?.map(user => (
+                      {users.map(user => (
                         <tr key={user.clerkId} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/50">
-                          <td className="px-4 py-3 font-medium">{user.name || "-"}</td>
+                          <td className="px-4 py-3 font-medium">{user.name || "—"}</td>
                           <td className="px-4 py-3 text-muted-foreground">{user.email}</td>
                           <td className="px-4 py-3">
                             <Badge variant={user.role === 'admin' ? 'default' : 'secondary'} className="capitalize">
@@ -102,7 +136,10 @@ export default function AdminDashboard() {
                                 <DropdownMenuItem onClick={() => handleRoleChange(user.clerkId, "user")}>
                                   Set to User {user.role === "user" && <Check className="ml-auto h-4 w-4" />}
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleRoleChange(user.clerkId, "admin")} className="text-red-600 focus:text-red-600">
+                                <DropdownMenuItem
+                                  onClick={() => handleRoleChange(user.clerkId, "admin")}
+                                  className="text-red-600 focus:text-red-600"
+                                >
                                   Set to Admin {user.role === "admin" && <Check className="ml-auto h-4 w-4" />}
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
@@ -117,17 +154,24 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="subscriptions">
           <Card>
             <CardHeader>
-              <CardTitle>Active Subscriptions</CardTitle>
+              <CardTitle className="flex items-center justify-between">
+                <span>Active Subscriptions</span>
+                {!isSubsLoading && subscriptions && (
+                  <span className="text-sm font-normal text-muted-foreground">{(subscriptions as any[]).length} total</span>
+                )}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {isSubsLoading ? (
                 <div className="space-y-4">
                   {[1, 2, 3].map(i => <Skeleton key={i} className="h-12 w-full" />)}
                 </div>
+              ) : !subscriptions || (subscriptions as any[]).length === 0 ? (
+                <div className="text-center py-10 text-muted-foreground text-sm">No subscriptions yet.</div>
               ) : (
                 <div className="rounded-md border overflow-x-auto">
                   <table className="w-full text-sm text-left">
@@ -140,7 +184,7 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                      {(subscriptions as any[])?.map(sub => (
+                      {(subscriptions as any[]).map(sub => (
                         <tr key={sub.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/50">
                           <td className="px-4 py-3">
                             <div className="font-medium text-sm">{sub.userName || "—"}</div>
@@ -153,7 +197,7 @@ export default function AdminDashboard() {
                             </Badge>
                           </td>
                           <td className="px-4 py-3 text-muted-foreground">
-                            {sub.currentPeriodEnd ? format(new Date(sub.currentPeriodEnd), "MMM d, yyyy") : "-"}
+                            {sub.currentPeriodEnd ? format(new Date(sub.currentPeriodEnd), "MMM d, yyyy") : "—"}
                           </td>
                         </tr>
                       ))}
@@ -169,7 +213,17 @@ export default function AdminDashboard() {
   );
 }
 
-function StatCard({ title, value, icon, isLoading }: { title: string, value: string | number | undefined, icon: React.ReactNode, isLoading: boolean }) {
+function StatCard({
+  title,
+  value,
+  icon,
+  isLoading,
+}: {
+  title: string;
+  value: string | number | undefined;
+  icon: React.ReactNode;
+  isLoading: boolean;
+}) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
@@ -180,9 +234,11 @@ function StatCard({ title, value, icon, isLoading }: { title: string, value: str
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <Skeleton className="h-8 w-20" />
+          <Skeleton className="h-8 w-24" />
+        ) : value == null ? (
+          <div className="text-2xl font-bold text-muted-foreground">—</div>
         ) : (
-          <div className="text-2xl font-bold">{value || 0}</div>
+          <div className="text-2xl font-bold">{value}</div>
         )}
       </CardContent>
     </Card>

@@ -21,6 +21,7 @@ const SettingsPage = React.lazy(() => import("./pages/settings"));
 const AdminDashboard = React.lazy(() => import("./pages/admin"));
 const AdminCourses = React.lazy(() => import("./pages/admin-courses"));
 const AdminLessons = React.lazy(() => import("./pages/admin-lessons"));
+const AdminResources = React.lazy(() => import("./pages/admin-resources"));
 const VideosPage = React.lazy(() => import("./pages/videos"));
 const PaymentVerifyPage = React.lazy(() => import("./pages/payment-verify"));
 const NotFound = React.lazy(() => import("./pages/not-found"));
@@ -225,6 +226,7 @@ function ClerkProviderWithRoutes() {
               <Route path="/admin"><ProtectedRoute component={AdminDashboard} adminOnly={true} /></Route>
               <Route path="/admin/courses"><ProtectedRoute component={AdminCourses} adminOnly={true} /></Route>
               <Route path="/admin/courses/:id/lessons"><ProtectedRoute component={AdminLessons} adminOnly={true} /></Route>
+              <Route path="/admin/resources"><ProtectedRoute component={AdminResources} adminOnly={true} /></Route>
               
               <Route component={NotFound} />
             </Switch>
