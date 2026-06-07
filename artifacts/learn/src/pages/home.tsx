@@ -180,7 +180,6 @@ export default function HomePage() {
       <section className="py-20 md:py-32">
         <div className="container mx-auto px-4 md:px-6 max-w-6xl">
           <motion.div initial="hidden" whileInView="show" viewport={viewportOpts} variants={stagger(0.1)} className="text-center mb-14 md:mb-20">
-            <motion.p variants={fadeUp} className="text-sm font-bold text-emerald-500 dark:text-emerald-400 uppercase tracking-widest mb-4">What you get</motion.p>
             <motion.h2 variants={fadeUp} className="font-display text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-5">
               Everything you need to <span className="text-gradient">excel</span>
             </motion.h2>
@@ -220,7 +219,6 @@ export default function HomePage() {
       <section className="py-16 md:py-24">
         <div className="container mx-auto px-4 md:px-6 max-w-5xl">
           <motion.div initial="hidden" whileInView="show" viewport={viewportOpts} variants={stagger(0.1)} className="text-center mb-12">
-            <motion.p variants={fadeUp} className="text-sm font-bold text-emerald-500 dark:text-emerald-400 uppercase tracking-widest mb-4">Curriculum</motion.p>
             <motion.h2 variants={fadeUp} className="font-display text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-4">Topics covered</motion.h2>
             <motion.p variants={fadeUp} className="text-foreground/55 text-base sm:text-lg max-w-xl mx-auto">A complete curriculum across all key areas of B.Ed English.</motion.p>
           </motion.div>
@@ -239,7 +237,6 @@ export default function HomePage() {
       <section className="py-16 md:py-24">
         <div className="container mx-auto px-4 md:px-6 max-w-6xl">
           <motion.div initial="hidden" whileInView="show" viewport={viewportOpts} variants={stagger(0.1)} className="text-center mb-12 sm:mb-14">
-            <motion.p variants={fadeUp} className="text-sm font-bold text-emerald-500 dark:text-emerald-400 uppercase tracking-widest mb-4">Student Reviews</motion.p>
             <motion.h2 variants={fadeUp} className="font-display text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">What our students say</motion.h2>
           </motion.div>
           <motion.div initial="hidden" whileInView="show" viewport={viewportOpts} variants={stagger(0.14)} className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -268,7 +265,7 @@ export default function HomePage() {
           viewport={viewportOpts} transition={{ duration: 0.7, ease }}
           className="container mx-auto px-4 md:px-6 max-w-4xl relative z-10 text-center"
         >
-          <p className="text-emerald-100/80 text-sm font-bold uppercase tracking-widest mb-4">Limited Time</p>
+          <p className="text-emerald-100/60 text-sm font-medium mb-4">Get full access today</p>
           <h2 className="font-display text-3xl sm:text-4xl md:text-6xl font-bold mb-6 text-white tracking-tight leading-tight">
             Start your B.Ed English<br className="hidden sm:block" /> preparation today
           </h2>

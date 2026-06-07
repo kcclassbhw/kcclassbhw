@@ -65,7 +65,6 @@ export default function CoursesPage() {
     <div className="container mx-auto px-4 md:px-6 py-10 md:py-14 max-w-7xl">
       {/* Header */}
       <div className="mb-10 md:mb-12">
-        <p className="text-sm font-bold text-emerald-500 dark:text-emerald-400 uppercase tracking-widest mb-3">Explore</p>
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
             <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight mb-3">Course Catalog</h1>

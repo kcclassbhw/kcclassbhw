@@ -64,7 +64,6 @@ export default function PricingPage() {
       <div className="container mx-auto px-4 md:px-6 pt-16 md:pt-24 max-w-5xl relative z-10">
         {/* Heading */}
         <div className="text-center mb-12 md:mb-16">
-          <p className="text-sm font-bold text-emerald-500 dark:text-emerald-400 uppercase tracking-widest mb-4">Pricing</p>
           <h1 className="font-display text-5xl md:text-6xl font-bold tracking-tight mb-5">
             Simple,{" "}
             <span className="text-gradient">affordable</span>{" "}
@@ -125,7 +124,7 @@ export default function PricingPage() {
               }`}
             >
               Yearly
-              <span className="bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider">
+              <span className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-[10px] px-2 py-0.5 rounded-full font-semibold">
                 Save 33%
               </span>
             </button>
@@ -137,8 +136,8 @@ export default function PricingPage() {
           <div className={`glass-card gradient-border rounded-3xl overflow-hidden transition-all ${isPremium ? "opacity-50 pointer-events-none" : "hover:shadow-2xl hover:shadow-emerald-500/[0.12]"}`}>
             {/* Top Bar */}
             <div className="h-20 bg-gradient-to-r from-emerald-500 to-teal-500 flex items-center justify-center relative">
-              <div className="absolute top-3 right-3 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-wider shadow-lg">
-                Most Popular
+              <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm text-white text-[10px] font-semibold px-2.5 py-1 rounded-full">
+                Most popular
               </div>
               <div className="flex items-center gap-2 text-white">
                 <Sparkles className="h-5 w-5" />

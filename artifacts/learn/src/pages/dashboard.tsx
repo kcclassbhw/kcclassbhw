@@ -7,7 +7,7 @@ import {
   useGetMySubscription
 } from "@workspace/api-client-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BookOpen, CheckCircle, Clock, Download, PlayCircle, Trophy, Sparkles, Library, ArrowRight, TrendingUp } from "lucide-react";
+import { BookOpen, CheckCircle, Clock, Download, PlayCircle, Sparkles, Library, ArrowRight, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function DashboardPage() {
@@ -33,8 +33,8 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-5">
         <div>
-          <p className="text-sm font-bold text-emerald-500 dark:text-emerald-400 uppercase tracking-widest mb-2">
-            {greeting}{user?.firstName ? `, ${user.firstName}` : ""} 👋
+          <p className="text-sm font-medium text-muted-foreground mb-2">
+            {greeting}{user?.firstName ? `, ${user.firstName}` : ""}
           </p>
           <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight">My Dashboard</h1>
         </div>
@@ -46,8 +46,8 @@ export default function DashboardPage() {
           </div>
         ) : (
           <Link href="/pricing">
-            <Button className="gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white border-0 rounded-full font-semibold btn-glow">
-              <Trophy className="h-4 w-4" /> Upgrade to Premium
+            <Button className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white border-0 rounded-full font-semibold btn-glow">
+              Upgrade to Premium
             </Button>
           </Link>
         )}
@@ -79,7 +79,7 @@ export default function DashboardPage() {
         />
         <div className="glass-card rounded-2xl p-5 flex flex-col gap-3 col-span-2 lg:col-span-1">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-foreground/40 uppercase tracking-widest">Total Courses</span>
+            <span className="text-xs font-medium text-muted-foreground">Total courses</span>
             <Library className="h-4 w-4 text-foreground/30" />
           </div>
           {isSummaryLoading ? (
@@ -213,7 +213,7 @@ function StatCard({ title, value, icon, iconColor, sub, isLoading }: {
   return (
     <div className="glass-card rounded-2xl p-5 flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-bold text-foreground/40 uppercase tracking-widest">{title}</span>
+        <span className="text-xs font-medium text-muted-foreground">{title}</span>
         <div className={`${iconColor}`}>{icon}</div>
       </div>
       {isLoading ? (
