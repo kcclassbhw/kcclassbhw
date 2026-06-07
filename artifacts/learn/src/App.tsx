@@ -140,13 +140,20 @@ function HomeRedirect() {
 
 function ProtectedRoute({ component: Component, adminOnly = false }: { component: React.ComponentType, adminOnly?: boolean }) {
   const { isLoaded, isSignedIn } = useUser();
-  const { data: me, isLoading: isMeLoading } = useGetMe({ query: { enabled: isLoaded && !!isSignedIn && adminOnly, queryKey: ['getMe'] } });
+  const { data: me, isLoading: isMeLoading, isError: isMeError } = useGetMe({ query: { enabled: isLoaded && !!isSignedIn && adminOnly, queryKey: ['getMe'] } });
 
   if (!isLoaded) return <div className="flex min-h-screen items-center justify-center"><span className="text-muted-foreground">Loading…</span></div>;
   if (!isSignedIn) return <Redirect to="/" />;
 
   if (adminOnly) {
     if (isMeLoading) return <div className="flex min-h-screen items-center justify-center"><span className="text-muted-foreground">Loading…</span></div>;
+    if (isMeError) return (
+      <div className="flex min-h-screen items-center justify-center flex-col gap-3 text-center px-4">
+        <span className="text-lg font-semibold text-destructive">Could not verify admin access</span>
+        <span className="text-sm text-muted-foreground">The server did not respond. Make sure you are signed in and try refreshing the page.</span>
+        <button onClick={() => window.location.reload()} className="mt-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity">Refresh</button>
+      </div>
+    );
     if (me?.role !== 'admin') return <Redirect to="/dashboard" />;
   }
 
