@@ -5,3 +5,4 @@ export * from "./resources";
 export * from "./subscriptions";
 export * from "./progress";
 export * from "./downloads";
+export * from "./announcements";

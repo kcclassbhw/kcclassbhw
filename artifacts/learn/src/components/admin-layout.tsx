@@ -1,11 +1,12 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, BookOpen, FolderOpen } from "lucide-react";
+import { LayoutDashboard, BookOpen, FolderOpen, Megaphone } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
   { href: "/admin/courses", label: "Course Manager", icon: BookOpen, exact: false },
   { href: "/admin/resources", label: "Resource Vault", icon: FolderOpen, exact: false },
+  { href: "/admin/announcements", label: "Announcements", icon: Megaphone, exact: false },
 ];
 
 export default function AdminLayout({ children, title }: { children: React.ReactNode, title: string }) {

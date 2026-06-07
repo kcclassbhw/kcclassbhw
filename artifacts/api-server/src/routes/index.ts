@@ -9,6 +9,7 @@ import dashboardRouter from "./dashboard";
 import adminRouter from "./admin";
 import videosRouter from "./videos";
 import webhooksRouter from "./webhooks";
+import publicRouter from "./public";
 import { ensureUser } from "./auth";
 
 const router: IRouter = Router();
@@ -32,5 +33,6 @@ router.use(dashboardRouter);
 router.use(adminRouter);
 router.use(videosRouter);
 router.use(webhooksRouter);
+router.use(publicRouter);
 
 export default router;

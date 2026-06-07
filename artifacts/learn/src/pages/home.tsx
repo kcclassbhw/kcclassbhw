@@ -1,9 +1,12 @@
 import React from "react";
 import { Link } from "wouter";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
-import { PlayCircle, FileText, ArrowRight, Star, GraduationCap, Youtube, Twitter, Instagram, Zap, Shield, Clock } from "lucide-react";
+import { PlayCircle, FileText, ArrowRight, Star, GraduationCap, Youtube, Twitter, Instagram, Zap, Shield, Clock, X, Info, AlertTriangle, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSEO } from "@/hooks/useSEO";
+import { useQuery } from "@tanstack/react-query";
+
+const API = import.meta.env.VITE_API_URL || "";
 
 /* ─── Shared animation variants ─────────────────────────────────────────── */
 
@@ -31,12 +34,62 @@ const cardVariant: Variants = {
 
 const viewportOpts = { once: true, margin: "-60px" };
 
+function formatCount(n: number): string {
+  if (n >= 1000) return `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}K+`;
+  return n > 0 ? `${n}+` : "—";
+}
+
 /* ─── Page ───────────────────────────────────────────────────────────────── */
 
 export default function HomePage() {
   useSEO();
+
+  const { data: stats } = useQuery({
+    queryKey: ["publicStats"],
+    queryFn: () => fetch(`${API}/api/public/stats`).then(r => r.json()),
+    staleTime: 60_000,
+  });
+
+  const { data: announcementsData } = useQuery({
+    queryKey: ["publicAnnouncements"],
+    queryFn: () => fetch(`${API}/api/public/announcements`).then(r => r.json()),
+    staleTime: 60_000,
+  });
+
+  const announcements: Array<{ id: number; message: string; type: string }> =
+    announcementsData?.announcements ?? [];
+
+  const [dismissedIds, setDismissedIds] = React.useState<Set<number>>(new Set());
+  const visibleAnnouncements = announcements.filter(a => !dismissedIds.has(a.id));
+
+  const heroStats = [
+    {
+      num: stats?.totalUsers != null ? formatCount(stats.totalUsers) : "—",
+      label: "Students Enrolled",
+    },
+    {
+      num: stats?.totalCourses != null ? String(stats.totalCourses) : "—",
+      label: "Comprehensive Courses",
+    },
+    {
+      num: stats?.totalLessons != null ? `${stats.totalLessons}+` : "—",
+      label: "Video Lessons",
+    },
+  ];
+
   return (
     <div className="flex flex-col min-h-screen overflow-x-hidden">
+
+      {/* ─── ANNOUNCEMENT BANNERS ──────────────────────────────────────── */}
+      <AnimatePresence>
+        {visibleAnnouncements.map(a => (
+          <AnnouncementBanner
+            key={a.id}
+            announcement={a}
+            onDismiss={() => setDismissedIds(prev => new Set([...prev, a.id]))}
+          />
+        ))}
+      </AnimatePresence>
 
       {/* ─── HERO ─────────────────────────────────────────────────────── */}
       <section className="relative min-h-[92vh] flex items-center justify-center py-20 sm:py-24 overflow-hidden">
@@ -76,16 +129,10 @@ export default function HomePage() {
               animate="show"
               variants={stagger(0.12)}
             >
-              <motion.span
-                variants={fadeUp}
-                className="block text-foreground"
-              >
+              <motion.span variants={fadeUp} className="block text-foreground">
                 Learn English.
               </motion.span>
-              <motion.span
-                variants={fadeUp}
-                className="block text-gradient"
-              >
+              <motion.span variants={fadeUp} className="block text-gradient">
                 Ace Your B.Ed.
               </motion.span>
             </motion.h1>
@@ -121,7 +168,7 @@ export default function HomePage() {
             </Link>
           </motion.div>
 
-          {/* Stats */}
+          {/* Stats — realtime */}
           <motion.div
             initial="hidden"
             animate="show"
@@ -129,11 +176,7 @@ export default function HomePage() {
             transition={{ delayChildren: 0.8 }}
             className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 max-w-2xl mx-auto"
           >
-            {[
-              { num: "12K+", label: "Students Enrolled" },
-              { num: "4", label: "Comprehensive Courses" },
-              { num: "Free", label: "To Start Learning" },
-            ].map(({ num, label }) => (
+            {heroStats.map(({ num, label }) => (
               <motion.div
                 key={label}
                 variants={cardVariant}
@@ -156,7 +199,6 @@ export default function HomePage() {
       <section className="py-20 md:py-32">
         <div className="container mx-auto px-4 md:px-6 max-w-6xl">
 
-          {/* Section header */}
           <motion.div
             initial="hidden"
             whileInView="show"
@@ -176,7 +218,6 @@ export default function HomePage() {
             </motion.p>
           </motion.div>
 
-          {/* Feature cards */}
           <motion.div
             initial="hidden"
             whileInView="show"
@@ -213,7 +254,6 @@ export default function HomePage() {
             </motion.div>
           </motion.div>
 
-          {/* Mini feature pills */}
           <motion.div
             initial="hidden"
             whileInView="show"
@@ -383,6 +423,42 @@ export default function HomePage() {
         </div>
       </footer>
     </div>
+  );
+}
+
+/* ─── Announcement Banner ────────────────────────────────────────────────── */
+
+function AnnouncementBanner({
+  announcement,
+  onDismiss,
+}: {
+  announcement: { id: number; message: string; type: string };
+  onDismiss: () => void;
+}) {
+  const styles = {
+    info: { bg: "bg-sky-500", icon: <Info className="h-4 w-4" /> },
+    warning: { bg: "bg-amber-500", icon: <AlertTriangle className="h-4 w-4" /> },
+    success: { bg: "bg-emerald-500", icon: <CheckCircle className="h-4 w-4" /> },
+  };
+  const s = styles[announcement.type as keyof typeof styles] ?? styles.info;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className={`${s.bg} text-white px-4 py-3 flex items-center justify-center gap-3 text-sm font-semibold`}
+    >
+      {s.icon}
+      <span>{announcement.message}</span>
+      <button
+        onClick={onDismiss}
+        className="ml-4 opacity-80 hover:opacity-100 transition-opacity"
+        aria-label="Dismiss"
+      >
+        <X className="h-4 w-4" />
+      </button>
+    </motion.div>
   );
 }
 

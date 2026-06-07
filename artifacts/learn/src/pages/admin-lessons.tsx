@@ -28,13 +28,23 @@ export default function AdminLessons() {
 
   const { data: course, isLoading: isCourseLoading } = useGetCourse(courseId, { query: { enabled: !!courseId, queryKey: ['getCourse', courseId] } });
   const { data: lessons, isLoading: isLessonsLoading, refetch } = useListLessons(courseId, { query: { enabled: !!courseId, queryKey: ['listLessons', courseId] } });
-  
+
   const createMutation = useCreateLesson();
   const updateMutation = useUpdateLesson();
   const deleteMutation = useDeleteLesson();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
+
+  // Local lesson list for drag-and-drop
+  const [localLessons, setLocalLessons] = useState<Lesson[]>([]);
+  const [draggingId, setDraggingId] = useState<number | null>(null);
+  const [dragOverId, setDragOverId] = useState<number | null>(null);
+  const [isSavingOrder, setIsSavingOrder] = useState(false);
+
+  useEffect(() => {
+    if (lessons) setLocalLessons([...lessons].sort((a, b) => a.order - b.order));
+  }, [lessons]);
 
   // Form State
   const [title, setTitle] = useState("");
@@ -74,32 +84,24 @@ export default function AdminLessons() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const data = { 
-      title, 
-      description, 
-      youtubeVideoId: youtubeVideoId || undefined, 
-      videoUrl: videoUrl || undefined, 
+    const data = {
+      title,
+      description,
+      youtubeVideoId: youtubeVideoId || undefined,
+      videoUrl: videoUrl || undefined,
       durationMinutes: durationMinutes || undefined,
-      isFree, 
+      isFree,
       isPublished,
-      order
+      order,
     };
 
     if (editingLesson) {
       updateMutation.mutate({ courseId, id: editingLesson.id, data }, {
-        onSuccess: () => {
-          toast.success("Lesson updated");
-          setIsModalOpen(false);
-          refetch();
-        }
+        onSuccess: () => { toast.success("Lesson updated"); setIsModalOpen(false); refetch(); }
       });
     } else {
       createMutation.mutate({ courseId, data }, {
-        onSuccess: () => {
-          toast.success("Lesson created");
-          setIsModalOpen(false);
-          refetch();
-        }
+        onSuccess: () => { toast.success("Lesson created"); setIsModalOpen(false); refetch(); }
       });
     }
   };
@@ -107,13 +109,72 @@ export default function AdminLessons() {
   const handleDelete = (id: number) => {
     if (confirm("Are you sure you want to delete this lesson?")) {
       deleteMutation.mutate({ courseId, id }, {
-        onSuccess: () => {
-          toast.success("Lesson deleted");
-          refetch();
-        }
+        onSuccess: () => { toast.success("Lesson deleted"); refetch(); }
       });
     }
   };
+
+  // ─── Drag-and-drop handlers ───────────────────────────────────────────────
+
+  const handleDragStart = (e: React.DragEvent, id: number) => {
+    setDraggingId(id);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e: React.DragEvent, id: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (id !== dragOverId) setDragOverId(id);
+  };
+
+  const handleDragLeave = () => setDragOverId(null);
+
+  const handleDrop = async (e: React.DragEvent, targetId: number) => {
+    e.preventDefault();
+    setDragOverId(null);
+    if (!draggingId || draggingId === targetId) { setDraggingId(null); return; }
+
+    const arr = [...localLessons];
+    const fromIdx = arr.findIndex(l => l.id === draggingId);
+    const toIdx = arr.findIndex(l => l.id === targetId);
+    const [moved] = arr.splice(fromIdx, 1);
+    arr.splice(toIdx, 0, moved);
+
+    const reordered = arr.map((l, i) => ({ ...l, order: i + 1 }));
+    setLocalLessons(reordered);
+    setDraggingId(null);
+
+    setIsSavingOrder(true);
+    try {
+      await Promise.all(
+        reordered.map(l =>
+          updateMutation.mutateAsync({
+            courseId,
+            id: l.id,
+            data: {
+              title: l.title,
+              description: l.description ?? undefined,
+              youtubeVideoId: l.youtubeVideoId ?? undefined,
+              videoUrl: l.videoUrl ?? undefined,
+              durationMinutes: l.durationMinutes ?? undefined,
+              isFree: l.isFree,
+              isPublished: l.isPublished,
+              order: l.order,
+            },
+          })
+        )
+      );
+      toast.success("Order saved");
+      refetch();
+    } catch {
+      toast.error("Failed to save order");
+      setLocalLessons([...lessons!].sort((a, b) => a.order - b.order));
+    } finally {
+      setIsSavingOrder(false);
+    }
+  };
+
+  const handleDragEnd = () => { setDraggingId(null); setDragOverId(null); };
 
   return (
     <AdminLayout title="Lesson Manager">
@@ -131,11 +192,18 @@ export default function AdminLessons() {
       </div>
 
       <div className="flex justify-between items-center mb-6 border-b pb-4">
-        <div className="text-sm text-muted-foreground">
-          {lessons?.length || 0} lessons total
+        <div className="text-sm text-muted-foreground flex items-center gap-3">
+          <span>{localLessons.length} lessons total</span>
+          {localLessons.length > 1 && (
+            <span className="flex items-center gap-1 text-indigo-500">
+              <GripVertical className="h-3.5 w-3.5" />
+              Drag to reorder
+            </span>
+          )}
+          {isSavingOrder && <span className="text-muted-foreground animate-pulse">Saving order…</span>}
         </div>
 
-        <Dialog open={isModalOpen} onOpenChange={(open) => { setIsModalOpen(open); if(!open) setEditingLesson(null); }}>
+        <Dialog open={isModalOpen} onOpenChange={(open) => { setIsModalOpen(open); if (!open) setEditingLesson(null); }}>
           <DialogTrigger asChild>
             <Button className="gap-2 bg-indigo-600 hover:bg-indigo-700">
               <Plus className="h-4 w-4" /> Add Lesson
@@ -155,7 +223,7 @@ export default function AdminLessons() {
                   <Label htmlFor="description">Description / Notes</Label>
                   <Textarea id="description" value={description} onChange={e => setDescription(e.target.value)} rows={4} />
                 </div>
-                
+
                 <div className="p-4 bg-zinc-50 dark:bg-zinc-900 rounded-lg space-y-4 border">
                   <div className="font-medium text-sm">Video Source (Provide One)</div>
                   <div className="grid gap-2">
@@ -178,7 +246,7 @@ export default function AdminLessons() {
                     <Input id="order" type="number" min="1" value={order} onChange={e => setOrder(parseInt(e.target.value) || 1)} required />
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-8 mt-2">
                   <div className="flex items-center space-x-2">
                     <Switch id="isFree" checked={isFree} onCheckedChange={setIsFree} />
@@ -205,41 +273,55 @@ export default function AdminLessons() {
         <div className="space-y-3">
           {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-16 w-full" />)}
         </div>
-      ) : lessons && lessons.length > 0 ? (
-        <div className="space-y-3">
-          {[...lessons].sort((a,b) => a.order - b.order).map((lesson) => (
-            <Card key={lesson.id} className="overflow-hidden">
+      ) : localLessons.length > 0 ? (
+        <div className="space-y-2">
+          {localLessons.map((lesson) => (
+            <Card
+              key={lesson.id}
+              draggable
+              onDragStart={e => handleDragStart(e, lesson.id)}
+              onDragOver={e => handleDragOver(e, lesson.id)}
+              onDragLeave={handleDragLeave}
+              onDrop={e => handleDrop(e, lesson.id)}
+              onDragEnd={handleDragEnd}
+              className={`overflow-hidden transition-all select-none ${
+                draggingId === lesson.id ? "opacity-40 scale-[0.98]" : ""
+              } ${dragOverId === lesson.id && draggingId !== lesson.id ? "ring-2 ring-indigo-500 border-indigo-500" : ""}`}
+            >
               <CardContent className="p-4 flex items-center gap-4">
-                <div className="text-muted-foreground cursor-grab hover:text-foreground">
+                <div
+                  className="text-muted-foreground cursor-grab active:cursor-grabbing hover:text-foreground touch-none"
+                  title="Drag to reorder"
+                >
                   <GripVertical className="h-5 w-5" />
                 </div>
-                <div className="w-8 text-center font-mono text-muted-foreground">{lesson.order}</div>
-                <div className="flex-1 flex items-center justify-between">
-                  <div>
-                    <h4 className="font-medium flex items-center gap-2">
-                      {lesson.title}
-                      {!lesson.isPublished && <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4">Draft</Badge>}
-                      {lesson.isFree && <Badge className="bg-emerald-500/10 text-emerald-600 text-[10px] px-1 py-0 h-4 border-0 hover:bg-emerald-500/20">Free Preview</Badge>}
+                <div className="w-7 text-center font-mono text-sm text-muted-foreground">{lesson.order}</div>
+                <div className="flex-1 flex items-center justify-between min-w-0">
+                  <div className="min-w-0">
+                    <h4 className="font-medium flex items-center gap-2 flex-wrap">
+                      <span className="truncate">{lesson.title}</span>
+                      {!lesson.isPublished && <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4 shrink-0">Draft</Badge>}
+                      {lesson.isFree && <Badge className="bg-emerald-500/10 text-emerald-600 text-[10px] px-1 py-0 h-4 border-0 hover:bg-emerald-500/20 shrink-0">Free</Badge>}
                     </h4>
                     <div className="text-xs text-muted-foreground mt-1 flex items-center gap-3">
                       {lesson.durationMinutes && <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {lesson.durationMinutes} min</span>}
                       {lesson.youtubeVideoId && <span className="flex items-center gap-1"><PlayCircle className="h-3 w-3" /> YouTube</span>}
                     </div>
                   </div>
-                  
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
+
+                  <div className="flex gap-1 shrink-0 ml-4">
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       title="Edit"
                       onClick={() => { setEditingLesson(lesson); setIsModalOpen(true); }}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      title="Delete" 
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      title="Delete"
                       className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
                       onClick={() => handleDelete(lesson.id)}
                     >
