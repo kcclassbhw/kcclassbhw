@@ -1,0 +1,48 @@
+clerk.browser.js:12 Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview
+
+kcclassbhw.onrender.com/api/users/me:1 
+ Failed to load resource: the server responded with a status of 401 ()
+kcclassbhw.onrender.…/download-history:1 
+ Failed to load resource: the server responded with a status of 401 ()
+kcclassbhw.onrender.…/subscriptions/me:1 
+ Failed to load resource: the server responded with a status of 401 ()
+kcclassbhw.onrender.com/api/users/me:1 
+ Failed to load resource: the server responded with a status of 401 ()
+kcclassbhw.onrender.…/download-history:1 
+ Failed to load resource: the server responded with a status of 401 ()
+kcclassbhw.onrender.com/api/users/me:1 
+ Failed to load resource: the server responded with a status of 401 ()
+kcclassbhw.onrender.…/subscriptions/me:1 
+ Failed to load resource: the server responded with a status of 401 ()
+kcclassbhw.onrender.com/api/users/me:1 
+ Failed to load resource: the server responded with a status of 401 ()
+kcclassbhw.onrender.com/api/users/me:1 
+ Failed to load resource: the server responded with a status of 401 ()
+kcclassbhw.onrender.…continue-watching:1 
+ Failed to load resource: the server responded with a status of 401 ()
+kcclassbhw.onrender.…/subscriptions/me:1 
+ Failed to load resource: the server responded with a status of 401 ()
+kcclassbhw.onrender.…dashboard/summary:1 
+ Failed to load resource: the server responded with a status of 401 ()
+kcclassbhw.onrender.…/subscriptions/me:1 
+ Failed to load resource: the server responded with a status of 401 ()
+kcclassbhw.onrender.…continue-watching:1 
+ Failed to load resource: the server responded with a status of 401 ()
+kcclassbhw.onrender.…dashboard/summary:1 
+ Failed to load resource: the server responded with a status of 401 ()
+index-ZdUzjX9Z.js:2 
+ GET https://kcclassbhw.onrender.com/api/subscriptions/me 401 (Unauthorized)
+index-ZdUzjX9Z.js:2 
+ GET https://kcclassbhw.onrender.com/api/dashboard/continue-watching 401 (Unauthorized)
+index-ZdUzjX9Z.js:2 
+ GET https://kcclassbhw.onrender.com/api/dashboard/summary 401 (Unauthorized)
+index-ZdUzjX9Z.js:2 
+ GET https://kcclassbhw.onrender.com/api/users/me 401 (Unauthorized)
+index-ZdUzjX9Z.js:2 
+ GET https://kcclassbhw.onrender.com/api/subscriptions/me 401 (Unauthorized)
+index-ZdUzjX9Z.js:2 
+ GET https://kcclassbhw.onrender.com/api/dashboard/summary 401 (Unauthorized)
+index-ZdUzjX9Z.js:2 
+ GET https://kcclassbhw.onrender.com/api/dashboard/continue-watching 401 (Unauthorized)
+﻿
+
