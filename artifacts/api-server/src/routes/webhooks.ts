@@ -22,6 +22,7 @@ import { Router, type IRouter } from "express";
 import { Webhook } from "svix";
 import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
+import { isDisposableEmail } from "../lib/disposableEmails";
 
 const router: IRouter = Router();
 
@@ -84,7 +85,33 @@ router.post("/webhooks/clerk", async (req: any, res): Promise<void> => {
   req.log.info({ eventType: type, clerkId: data.id }, "Clerk webhook received");
 
   try {
-    if (type === "user.created" || type === "user.updated") {
+    if (type === "user.created") {
+      const { email, name, avatarUrl } = extractUserFields(data);
+
+      if (isDisposableEmail(email)) {
+        req.log.warn({ clerkId: data.id, email }, "Blocked disposable email signup — deleting Clerk user");
+        try {
+          const { clerkClient } = await import("@clerk/express");
+          await clerkClient.users.deleteUser(data.id);
+        } catch (deleteErr) {
+          req.log.error({ deleteErr, clerkId: data.id }, "Failed to delete disposable-email Clerk user");
+        }
+        res.json({ received: true });
+        return;
+      }
+
+      await db
+        .insert(usersTable)
+        .values({ clerkId: data.id, email, name, avatarUrl })
+        .onConflictDoUpdate({
+          target: usersTable.clerkId,
+          set: { email, name, avatarUrl },
+        });
+
+      req.log.info({ clerkId: data.id }, "User created from Clerk webhook");
+    }
+
+    if (type === "user.updated") {
       const { email, name, avatarUrl } = extractUserFields(data);
 
       await db
@@ -95,7 +122,7 @@ router.post("/webhooks/clerk", async (req: any, res): Promise<void> => {
           set: { email, name, avatarUrl },
         });
 
-      req.log.info({ clerkId: data.id, type }, "User upserted from Clerk webhook");
+      req.log.info({ clerkId: data.id }, "User updated from Clerk webhook");
     }
 
     if (type === "user.deleted") {

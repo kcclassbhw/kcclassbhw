@@ -8,15 +8,20 @@ const router: IRouter = Router();
 const CHANNEL_ID = process.env.YOUTUBE_CHANNEL_ID || "UC77kf2jXTQvRl2vV3CI8oRA";
 const RSS_URL = `https://www.youtube.com/feeds/videos.xml?channel_id=${CHANNEL_ID}`;
 
+// Escape a string for safe use inside a RegExp literal.
+function reEscape(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 // Simple XML field extractor
 function extractField(xml: string, tag: string): string {
-  const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\/${tag}>`, "i");
+  const re = new RegExp(`<${reEscape(tag)}[^>]*>([\\s\\S]*?)<\\/${reEscape(tag)}>`, "i");
   const match = xml.match(re);
   return match ? match[1].trim() : "";
 }
 
 function extractAttr(xml: string, tag: string, attr: string): string {
-  const re = new RegExp(`<${tag}[^>]+${attr}="([^"]*)"`, "i");
+  const re = new RegExp(`<${reEscape(tag)}[^>]+${reEscape(attr)}="([^"]*)"`, "i");
   const match = xml.match(re);
   return match ? match[1] : "";
 }
