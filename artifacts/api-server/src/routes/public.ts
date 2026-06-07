@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, pool, usersTable, coursesTable, lessonsTable } from "@workspace/db";
+import { db, usersTable, coursesTable, lessonsTable, announcementsTable } from "@workspace/db";
 import { eq, count } from "drizzle-orm";
 
 const router: IRouter = Router();
@@ -21,10 +21,13 @@ router.get("/public/stats", async (_req, res): Promise<void> => {
 
 router.get("/public/announcements", async (_req, res): Promise<void> => {
   try {
-    const result = await pool.query(
-      "SELECT * FROM announcements WHERE is_active = true ORDER BY created_at DESC LIMIT 3"
-    );
-    res.json({ announcements: result.rows });
+    const announcements = await db
+      .select()
+      .from(announcementsTable)
+      .where(eq(announcementsTable.isActive, true))
+      .orderBy(announcementsTable.createdAt)
+      .limit(3);
+    res.json({ announcements });
   } catch {
     res.json({ announcements: [] });
   }

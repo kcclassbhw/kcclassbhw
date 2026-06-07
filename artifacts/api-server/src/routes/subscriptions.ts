@@ -28,7 +28,7 @@ function makeSignature(totalAmount: number, transactionUuid: string, productCode
 
 async function autoExpire(sub: any): Promise<any> {
   if (sub.status === "active" && sub.currentPeriodEnd && new Date(sub.currentPeriodEnd) < new Date()) {
-    await db.update(subscriptionsTable).set({ status: "inactive", updatedAt: new Date() }).where(eq(subscriptionsTable.userId, sub.userId));
+    await db.update(subscriptionsTable).set({ status: "inactive" }).where(eq(subscriptionsTable.userId, sub.userId));
     return { ...sub, status: "inactive" };
   }
   return sub;

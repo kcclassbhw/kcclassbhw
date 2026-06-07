@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, progressTable } from "@workspace/db";
+import { db, progressTable, lessonsTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import {
   MarkLessonCompleteParams,
@@ -22,7 +22,6 @@ router.post("/progress/:lessonId", requireAuth, async (req: any, res): Promise<v
   const parsed = MarkLessonCompleteBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
-  const { lessonsTable } = await import("@workspace/db");
   const [lesson] = await db.select().from(lessonsTable).where(eq(lessonsTable.id, params.data.lessonId));
   if (!lesson) { res.status(404).json({ error: "Lesson not found" }); return; }
 

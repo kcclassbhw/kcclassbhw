@@ -57,7 +57,6 @@ type ResourceForm = {
   title: string;
   description: string;
   category: string;
-  fileUrl: string;
   storageKey: string;
   fileSize: string;
   fileType: string;
@@ -67,7 +66,6 @@ const defaultForm: ResourceForm = {
   title: "",
   description: "",
   category: "Notes",
-  fileUrl: "",
   storageKey: "",
   fileSize: "",
   fileType: "application/pdf",
@@ -108,7 +106,6 @@ export default function AdminResources() {
       title: r.title,
       description: r.description ?? "",
       category: r.category,
-      fileUrl: r.fileUrl ?? "",
       storageKey: r.storageKey ?? "",
       fileSize: r.fileSize != null ? String(r.fileSize) : "",
       fileType: r.fileType ?? "application/pdf",
@@ -122,19 +119,15 @@ export default function AdminResources() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const data = {
-      title: form.title,
-      description: form.description || undefined,
-      category: form.category,
-      fileUrl: form.fileUrl || undefined,
-      storageKey: form.storageKey || "",
-      fileSize: form.fileSize ? parseInt(form.fileSize) : undefined,
-      fileType: form.fileType || undefined,
-    };
 
     if (editingId !== null) {
+      const updateData = {
+        title: form.title,
+        description: form.description || undefined,
+        category: form.category,
+      };
       updateMutation.mutate(
-        { id: editingId, resourceUpdate: data as any },
+        { id: editingId, data: updateData },
         {
           onSuccess: () => {
             toast.success("Resource updated");
@@ -145,8 +138,16 @@ export default function AdminResources() {
         }
       );
     } else {
+      const createData = {
+        title: form.title,
+        description: form.description || undefined,
+        category: form.category,
+        storageKey: form.storageKey || "",
+        fileSize: form.fileSize ? parseInt(form.fileSize) : 0,
+        fileType: form.fileType || "application/pdf",
+      };
       createMutation.mutate(
-        { resourceInput: data as any },
+        { data: createData },
         {
           onSuccess: () => {
             toast.success("Resource created");
@@ -292,28 +293,13 @@ export default function AdminResources() {
 
                 <div className="p-4 bg-zinc-50 dark:bg-zinc-900 rounded-lg border space-y-3">
                   <div className="text-sm font-medium flex items-center gap-2">
-                    <Link2 className="h-4 w-4" /> File Link
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>
-                      File URL{" "}
-                      <span className="text-muted-foreground font-normal text-xs">
-                        (Google Drive, Dropbox, direct link)
-                      </span>
-                    </Label>
-                    <Input
-                      value={form.fileUrl}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, fileUrl: e.target.value }))
-                      }
-                      placeholder="https://drive.google.com/..."
-                    />
+                    <Link2 className="h-4 w-4" /> File Details
                   </div>
                   <div className="grid gap-2">
                     <Label>
                       Storage Key{" "}
                       <span className="text-muted-foreground font-normal text-xs">
-                        (internal file path if using object storage)
+                        (internal file path for object storage)
                       </span>
                     </Label>
                     <Input
@@ -322,6 +308,7 @@ export default function AdminResources() {
                         setForm((f) => ({ ...f, storageKey: e.target.value }))
                       }
                       placeholder="resources/grammar-notes.pdf"
+                      disabled={editingId !== null}
                     />
                   </div>
                   <div className="grid gap-2">
@@ -339,6 +326,7 @@ export default function AdminResources() {
                         setForm((f) => ({ ...f, fileSize: e.target.value }))
                       }
                       placeholder="e.g. 204800"
+                      disabled={editingId !== null}
                     />
                   </div>
                 </div>
@@ -415,18 +403,8 @@ export default function AdminResources() {
                       <Download className="h-3 w-3" />
                       {r.downloadCount ?? 0} downloads
                     </span>
-                    {r.fileSize && (
+                    {r.fileSize != null && r.fileSize > 0 && (
                       <span>{(r.fileSize / 1024).toFixed(0)} KB</span>
-                    )}
-                    {r.fileUrl && (
-                      <a
-                        href={r.fileUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-indigo-500 hover:text-indigo-400"
-                      >
-                        <Link2 className="h-3 w-3" /> View file
-                      </a>
                     )}
                   </div>
                 </div>

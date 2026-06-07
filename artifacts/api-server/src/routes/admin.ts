@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, pool, usersTable, subscriptionsTable, coursesTable, lessonsTable, resourcesTable, progressTable } from "@workspace/db";
+import { db, usersTable, subscriptionsTable, coursesTable, lessonsTable, resourcesTable, progressTable, announcementsTable } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
 import {
   UpdateUserRoleParams,
@@ -12,23 +12,6 @@ const router: IRouter = Router();
 
 const MONTHLY_PRICE = parseInt(process.env.ESEWA_MONTHLY_PRICE || "299", 10);
 const YEARLY_PRICE = parseInt(process.env.ESEWA_YEARLY_PRICE || "2399", 10);
-
-// Auto-create announcements table if missing
-(async () => {
-  try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS announcements (
-        id SERIAL PRIMARY KEY,
-        message TEXT NOT NULL,
-        type TEXT NOT NULL DEFAULT 'info',
-        is_active BOOLEAN NOT NULL DEFAULT true,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      )
-    `);
-  } catch (err) {
-    console.warn("Could not create announcements table:", err);
-  }
-})();
 
 // GET /admin/stats
 router.get("/admin/stats", requireAdmin, async (req, res): Promise<void> => {
@@ -214,32 +197,30 @@ router.patch("/admin/users/:clerkId/role", requireAdmin, async (req, res): Promi
 // --- Announcements ---
 
 router.get("/admin/announcements", requireAdmin, async (req, res): Promise<void> => {
-  const result = await pool.query("SELECT * FROM announcements ORDER BY created_at DESC");
-  res.json(result.rows);
+  const announcements = await db.select().from(announcementsTable).orderBy(desc(announcementsTable.createdAt));
+  res.json(announcements);
 });
 
 router.post("/admin/announcements", requireAdmin, async (req, res): Promise<void> => {
   const { message, type = "info" } = req.body as { message: string; type?: string };
   if (!message?.trim()) { res.status(400).json({ error: "message required" }); return; }
-  const result = await pool.query(
-    "INSERT INTO announcements (message, type) VALUES ($1, $2) RETURNING *",
-    [message.trim(), type]
-  );
-  res.json(result.rows[0]);
+  const [announcement] = await db.insert(announcementsTable).values({ message: message.trim(), type }).returning();
+  res.json(announcement);
 });
 
 router.patch("/admin/announcements/:id", requireAdmin, async (req, res): Promise<void> => {
   const { isActive } = req.body as { isActive: boolean };
-  const result = await pool.query(
-    "UPDATE announcements SET is_active = $1 WHERE id = $2 RETURNING *",
-    [isActive, req.params.id]
-  );
-  if (!result.rows[0]) { res.status(404).json({ error: "Not found" }); return; }
-  res.json(result.rows[0]);
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+  const [announcement] = await db.update(announcementsTable).set({ isActive }).where(eq(announcementsTable.id, id)).returning();
+  if (!announcement) { res.status(404).json({ error: "Not found" }); return; }
+  res.json(announcement);
 });
 
 router.delete("/admin/announcements/:id", requireAdmin, async (req, res): Promise<void> => {
-  await pool.query("DELETE FROM announcements WHERE id = $1", [req.params.id]);
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+  await db.delete(announcementsTable).where(eq(announcementsTable.id, id));
   res.json({ success: true });
 });
 
