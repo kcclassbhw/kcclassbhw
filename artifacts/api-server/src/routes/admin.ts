@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, usersTable, subscriptionsTable, coursesTable, lessonsTable, resourcesTable, progressTable, announcementsTable } from "@workspace/db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and, lte, or, isNull, sql } from "drizzle-orm";
 import {
   UpdateUserRoleParams,
   UpdateUserRoleBody,
@@ -16,7 +16,13 @@ const YEARLY_PRICE = parseInt(process.env.ESEWA_YEARLY_PRICE || "2399", 10);
 // GET /admin/stats
 router.get("/admin/stats", requireAdmin, async (req, res): Promise<void> => {
   const totalUsers = await db.$count(usersTable);
-  const activeSubs = await db.select().from(subscriptionsTable).where(eq(subscriptionsTable.status, "active"));
+  const now = new Date();
+  const activeSubs = await db.select().from(subscriptionsTable).where(
+    and(
+      eq(subscriptionsTable.status, "active"),
+      or(isNull(subscriptionsTable.currentPeriodEnd), sql`${subscriptionsTable.currentPeriodEnd} >= ${now}`)
+    )
+  );
   const activeSubscriptions = activeSubs.length;
   const totalCourses = await db.$count(coursesTable);
   const totalLessons = await db.$count(lessonsTable);

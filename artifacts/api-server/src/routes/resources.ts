@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, resourcesTable, downloadsTable } from "@workspace/db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import {
   ListResourcesQueryParams,
   GetResourceParams,
@@ -85,7 +85,7 @@ router.post("/resources/:id/download", requireActiveSubscription, async (req: an
   const [resource] = await db.select().from(resourcesTable).where(eq(resourcesTable.id, params.data.id));
   if (!resource) { res.status(404).json({ error: "Resource not found" }); return; }
 
-  await db.update(resourcesTable).set({ downloadCount: resource.downloadCount + 1 }).where(eq(resourcesTable.id, params.data.id));
+  await db.update(resourcesTable).set({ downloadCount: sql`${resourcesTable.downloadCount} + 1` }).where(eq(resourcesTable.id, params.data.id));
 
   const [download] = await db.insert(downloadsTable).values({
     userId: req.userId,

@@ -15,12 +15,14 @@ router.get("/dashboard/summary", requireAuth, async (req: any, res): Promise<voi
   const enrolledCourses = new Set(progress.map(p => p.courseId)).size;
   const totalDownloads = await db.$count(downloadsTable, eq(downloadsTable.userId, req.userId));
 
+  const isSubActive = sub?.status === "active" && (!sub.currentPeriodEnd || new Date(sub.currentPeriodEnd) >= new Date());
+
   res.json({
     totalCourses,
     completedLessons,
     totalLessons,
     enrolledCourses,
-    activeSubscription: sub?.status === "active",
+    activeSubscription: isSubActive,
     totalDownloads,
     subscriptionPlan: sub?.plan ?? null,
     subscriptionEnd: sub?.currentPeriodEnd?.toISOString() ?? null,

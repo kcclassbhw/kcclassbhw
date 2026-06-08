@@ -43,7 +43,8 @@ export const requireActiveSubscription = async (req: any, res: any, next: any): 
   const [sub] = await db.select().from(subscriptionsTable).where(
     eq(subscriptionsTable.userId, userId as string)
   );
-  if (!sub || sub.status !== "active") {
+  const isExpired = sub?.currentPeriodEnd && new Date(sub.currentPeriodEnd) < new Date();
+  if (!sub || sub.status !== "active" || isExpired) {
     res.status(403).json({ error: "Active subscription required" });
     return;
   }
