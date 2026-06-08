@@ -91,6 +91,8 @@ export default function AdminDashboard() {
       queryClient.invalidateQueries({ queryKey: ["adminSubs"] });
       queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
       queryClient.invalidateQueries({ queryKey: ["adminStats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/subscriptions/me"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
     },
     onError: () => toast.error("Failed to grant subscription"),
   });
@@ -108,6 +110,8 @@ export default function AdminDashboard() {
       queryClient.invalidateQueries({ queryKey: ["adminSubs"] });
       queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
       queryClient.invalidateQueries({ queryKey: ["adminStats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/subscriptions/me"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
     },
     onError: () => toast.error("Failed to revoke subscription"),
   });
@@ -117,6 +121,7 @@ export default function AdminDashboard() {
       onSuccess: () => {
         toast.success(`Role updated to ${role}`);
         queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
       },
       onError: () => toast.error("Failed to update role"),
     });
