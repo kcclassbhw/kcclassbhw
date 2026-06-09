@@ -1,5 +1,5 @@
 import React, { Component, Suspense, useEffect, useRef } from "react";
-import { ClerkProvider, Show, useClerk, useUser } from '@clerk/react';
+import { ClerkProvider, SignIn, SignUp, Show, useClerk, useUser } from '@clerk/react';
 import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
 import { Switch, Route, useLocation, Router as WouterRouter, Redirect } from 'wouter';
@@ -25,9 +25,6 @@ const AdminResources = React.lazy(() => import("./pages/admin-resources"));
 const AdminAnnouncements = React.lazy(() => import("./pages/admin-announcements"));
 const VideosPage = React.lazy(() => import("./pages/videos"));
 const PaymentVerifyPage = React.lazy(() => import("./pages/payment-verify"));
-const SignInPage = React.lazy(() => import("./pages/sign-in"));
-const SignUpPage = React.lazy(() => import("./pages/sign-up"));
-const SSOCallbackPage = React.lazy(() => import("./pages/sso-callback"));
 const NotFound = React.lazy(() => import("./pages/not-found"));
 import { useGetMe } from "@workspace/api-client-react";
 import Layout from "./components/layout";
@@ -119,6 +116,22 @@ const clerkAppearance = {
   },
 };
 
+function SignInPage() {
+  return (
+    <div className="flex min-h-[100dvh] items-center justify-center bg-zinc-50 dark:bg-zinc-950 px-4">
+      <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} />
+    </div>
+  );
+}
+
+function SignUpPage() {
+  return (
+    <div className="flex min-h-[100dvh] items-center justify-center bg-zinc-50 dark:bg-zinc-950 px-4">
+      <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} />
+    </div>
+  );
+}
+
 function HomeRedirect() {
   const { isLoaded, isSignedIn } = useUser();
   if (isLoaded && isSignedIn) return <Redirect to="/dashboard" />;
@@ -203,9 +216,8 @@ function ClerkProviderWithRoutes() {
             <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><span className="text-muted-foreground text-sm">Loading…</span></div>}>
             <Switch>
               <Route path="/" component={HomeRedirect} />
-              <Route path="/sign-in" component={SignInPage} />
-              <Route path="/sign-up" component={SignUpPage} />
-              <Route path="/sso-callback" component={SSOCallbackPage} />
+              <Route path="/sign-in/*?" component={SignInPage} />
+              <Route path="/sign-up/*?" component={SignUpPage} />
               
               <Route path="/courses" component={CoursesPage} />
               <Route path="/courses/:id" component={CourseDetailPage} />
