@@ -50,10 +50,20 @@ app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
 // Raw body for Clerk webhook signature verification — must be before express.json()
 app.use("/api/webhooks/clerk", express.raw({ type: "application/json" }));
 
-// CORS — allow the configured frontend origin(s). In development, allow all.
-const corsOrigin = process.env.CORS_ORIGIN
+// CORS — allow the configured frontend origin(s).
+// In production, CORS_ORIGIN MUST be set. If it is missing, we log an error
+// and fall back to blocking all cross-origin requests (origin: false) to avoid
+// accidentally opening the API to the world.
+const corsOrigin: string[] | boolean = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(",").map((o) => o.trim())
-  : true;
+  : process.env.NODE_ENV === "production"
+    ? (() => {
+        logger.error(
+          "CORS_ORIGIN env var is not set in production — cross-origin requests will be blocked. Set CORS_ORIGIN to your frontend URL on Render.",
+        );
+        return false;
+      })()
+    : true; // dev: allow all origins
 app.use(cors({ credentials: true, origin: corsOrigin }));
 
 app.use(express.json());

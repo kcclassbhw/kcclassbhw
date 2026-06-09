@@ -70,7 +70,11 @@ router.patch("/courses/:courseId/lessons/:id", requireAdmin, async (req, res): P
   const parsed = UpdateLessonBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
-  const [lesson] = await db.update(lessonsTable).set(parsed.data).where(eq(lessonsTable.id, params.data.id)).returning();
+  const [lesson] = await db
+    .update(lessonsTable)
+    .set(parsed.data)
+    .where(and(eq(lessonsTable.id, params.data.id), eq(lessonsTable.courseId, params.data.courseId)))
+    .returning();
   if (!lesson) { res.status(404).json({ error: "Lesson not found" }); return; }
   res.json(lesson);
 });
@@ -79,7 +83,9 @@ router.patch("/courses/:courseId/lessons/:id", requireAdmin, async (req, res): P
 router.delete("/courses/:courseId/lessons/:id", requireAdmin, async (req, res): Promise<void> => {
   const params = DeleteLessonParams.safeParse({ courseId: req.params.courseId, id: req.params.id });
   if (!params.success) { res.status(400).json({ error: "Invalid params" }); return; }
-  await db.delete(lessonsTable).where(eq(lessonsTable.id, params.data.id));
+  await db
+    .delete(lessonsTable)
+    .where(and(eq(lessonsTable.id, params.data.id), eq(lessonsTable.courseId, params.data.courseId)));
   res.sendStatus(204);
 });
 

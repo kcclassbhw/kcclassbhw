@@ -49,7 +49,7 @@ export default function CourseDetailPage() {
         const form = document.createElement("form");
         form.method = "POST";
         form.action = res.paymentUrl;
-        Object.entries(res.formData as Record<string, string>).forEach(([key, value]) => {
+        Object.entries((res.formData ?? {}) as Record<string, string>).forEach(([key, value]) => {
           const input = document.createElement("input");
           input.type = "hidden";
           input.name = key;

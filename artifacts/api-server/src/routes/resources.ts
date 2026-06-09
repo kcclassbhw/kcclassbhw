@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, resourcesTable, downloadsTable } from "@workspace/db";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc, sql, and, ilike } from "drizzle-orm";
 import {
   ListResourcesQueryParams,
   GetResourceParams,
@@ -17,16 +17,18 @@ const router: IRouter = Router();
 // GET /resources — requires subscription
 router.get("/resources", requireActiveSubscription, async (req: any, res): Promise<void> => {
   const parsed = ListResourcesQueryParams.safeParse(req.query);
-  let resources = await db.select().from(resourcesTable).orderBy(desc(resourcesTable.createdAt));
 
+  const filters = [];
   if (parsed.success) {
-    if (parsed.data.category) {
-      resources = resources.filter(r => r.category === parsed.data.category);
-    }
-    if (parsed.data.search) {
-      resources = resources.filter(r => r.title.toLowerCase().includes(parsed.data.search!.toLowerCase()));
-    }
+    if (parsed.data.category) filters.push(eq(resourcesTable.category, parsed.data.category));
+    if (parsed.data.search) filters.push(ilike(resourcesTable.title, `%${parsed.data.search}%`));
   }
+
+  const resources = await db
+    .select()
+    .from(resourcesTable)
+    .where(filters.length ? and(...(filters as [any, ...any[]])) : undefined)
+    .orderBy(desc(resourcesTable.createdAt));
 
   // Strip storageKey from response
   res.json(resources.map(({ storageKey: _, ...r }) => r));

@@ -8,6 +8,16 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Edit, Trash2, ArrowLeft, GripVertical, Clock, PlayCircle } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -35,6 +45,7 @@ export default function AdminLessons() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
+  const [deletingLesson, setDeletingLesson] = useState<Lesson | null>(null);
 
   // Local lesson list for drag-and-drop
   const [localLessons, setLocalLessons] = useState<Lesson[]>([]);
@@ -106,12 +117,12 @@ export default function AdminLessons() {
     }
   };
 
-  const handleDelete = (id: number) => {
-    if (confirm("Are you sure you want to delete this lesson?")) {
-      deleteMutation.mutate({ courseId, id }, {
-        onSuccess: () => { toast.success("Lesson deleted"); refetch(); }
-      });
-    }
+  const handleDeleteConfirm = () => {
+    if (!deletingLesson) return;
+    deleteMutation.mutate({ courseId, id: deletingLesson.id }, {
+      onSuccess: () => { toast.success("Lesson deleted"); setDeletingLesson(null); refetch(); },
+      onError: () => { toast.error("Failed to delete lesson"); setDeletingLesson(null); },
+    });
   };
 
   // ─── Drag-and-drop handlers ───────────────────────────────────────────────
@@ -323,7 +334,7 @@ export default function AdminLessons() {
                       size="icon"
                       title="Delete"
                       className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
-                      onClick={() => handleDelete(lesson.id)}
+                      onClick={() => setDeletingLesson(lesson)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -341,6 +352,26 @@ export default function AdminLessons() {
           <Button onClick={() => setIsModalOpen(true)}>Add First Lesson</Button>
         </div>
       )}
+
+      <AlertDialog open={!!deletingLesson} onOpenChange={(open) => { if (!open) setDeletingLesson(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete "{deletingLesson?.title}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove the lesson. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+              onClick={handleDeleteConfirm}
+            >
+              Delete Lesson
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 }

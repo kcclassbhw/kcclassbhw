@@ -41,6 +41,16 @@ import {
   BookOpen,
   FolderOpen,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const CATEGORIES = [
   "Grammar",
@@ -85,6 +95,7 @@ export default function AdminResources() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<ResourceForm>(defaultForm);
+  const [deletingResource, setDeletingResource] = useState<{ id: number; title: string } | null>(null);
 
   const filtered = (resources ?? []).filter((r) => {
     const matchSearch =
@@ -160,16 +171,20 @@ export default function AdminResources() {
     }
   }
 
-  function handleDelete(id: number, title: string) {
-    if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
+  function handleDeleteConfirm() {
+    if (!deletingResource) return;
     deleteMutation.mutate(
-      { id },
+      { id: deletingResource.id },
       {
         onSuccess: () => {
           toast.success("Resource deleted");
+          setDeletingResource(null);
           invalidate();
         },
-        onError: () => toast.error("Failed to delete resource"),
+        onError: () => {
+          toast.error("Failed to delete resource");
+          setDeletingResource(null);
+        },
       }
     );
   }
@@ -422,7 +437,7 @@ export default function AdminResources() {
                     size="icon"
                     title="Delete"
                     className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
-                    onClick={() => handleDelete(r.id, r.title)}
+                    onClick={() => setDeletingResource({ id: r.id, title: r.title })}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -443,6 +458,25 @@ export default function AdminResources() {
           </Button>
         </div>
       )}
+      <AlertDialog open={!!deletingResource} onOpenChange={(open) => { if (!open) setDeletingResource(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete "{deletingResource?.title}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove the resource. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+              onClick={handleDeleteConfirm}
+            >
+              Delete Resource
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 }

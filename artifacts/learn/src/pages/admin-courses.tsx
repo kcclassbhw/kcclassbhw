@@ -17,10 +17,22 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Course } from "@workspace/api-client-react";
+
+const DEFAULT_CATEGORY = "Grammar";
 
 export default function AdminCourses() {
   const { data: courses, isLoading, refetch } = useListCourses();
@@ -31,11 +43,12 @@ export default function AdminCourses() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+  const [deletingCourse, setDeletingCourse] = useState<Course | null>(null);
 
   // Form State
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("Frontend");
+  const [category, setCategory] = useState(DEFAULT_CATEGORY);
   const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [isFree, setIsFree] = useState(false);
   const [isPublished, setIsPublished] = useState(false);
@@ -56,7 +69,7 @@ export default function AdminCourses() {
   const resetForm = () => {
     setTitle("");
     setDescription("");
-    setCategory("Frontend");
+    setCategory(DEFAULT_CATEGORY);
     setThumbnailUrl("");
     setIsFree(false);
     setIsPublished(false);
@@ -94,15 +107,19 @@ export default function AdminCourses() {
     });
   };
 
-  const handleDelete = (id: number) => {
-    if (confirm("Are you sure you want to delete this course? This action cannot be undone.")) {
-      deleteMutation.mutate({ id }, {
-        onSuccess: () => {
-          toast.success("Course deleted");
-          refetch();
-        }
-      });
-    }
+  const handleDeleteConfirm = () => {
+    if (!deletingCourse) return;
+    deleteMutation.mutate({ id: deletingCourse.id }, {
+      onSuccess: () => {
+        toast.success("Course deleted");
+        setDeletingCourse(null);
+        refetch();
+      },
+      onError: () => {
+        toast.error("Failed to delete course");
+        setDeletingCourse(null);
+      }
+    });
   };
 
   const filteredCourses = courses?.filter(c => 
@@ -125,7 +142,7 @@ export default function AdminCourses() {
 
         <Dialog open={isModalOpen} onOpenChange={(open) => { setIsModalOpen(open); if(!open) setEditingCourse(null); }}>
           <DialogTrigger asChild>
-            <Button className="gap-2 bg-indigo-600 hover:bg-indigo-700">
+            <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700">
               <Plus className="h-4 w-4" /> New Course
             </Button>
           </DialogTrigger>
@@ -240,7 +257,7 @@ export default function AdminCourses() {
                         size="icon" 
                         title="Delete" 
                         className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
-                        onClick={() => handleDelete(course.id)}
+                        onClick={() => setDeletingCourse(course)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -258,6 +275,26 @@ export default function AdminCourses() {
           <p className="text-muted-foreground text-sm">Create a new course to get started.</p>
         </div>
       )}
+
+      <AlertDialog open={!!deletingCourse} onOpenChange={(open) => { if (!open) setDeletingCourse(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete "{deletingCourse?.title}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the course and all its lessons. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+              onClick={handleDeleteConfirm}
+            >
+              Delete Course
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 }
