@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { getAuth } from "@clerk/express";
 import { db, usersTable, subscriptionsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
+import { isDisposableEmail } from "../lib/disposableEmails";
 
 const router: IRouter = Router();
 
@@ -101,8 +102,11 @@ export const ensureUser = async (req: any, res: any, next: any): Promise<void> =
       .where(eq(usersTable.clerkId, userId as string));
 
     if (!existing) {
+      let upserted: typeof existing | undefined;
       try {
         await upsertUserFromClerk(userId as string);
+        const [row] = await db.select().from(usersTable).where(eq(usersTable.clerkId, userId as string));
+        upserted = row;
       } catch {
         // Fallback: create a minimal row so the request can proceed
         await db
@@ -110,6 +114,17 @@ export const ensureUser = async (req: any, res: any, next: any): Promise<void> =
           .values({ clerkId: userId as string, email: "", name: "" })
           .onConflictDoNothing();
       }
+      // Block disposable emails the moment their account is first seen
+      if (upserted?.email && isDisposableEmail(upserted.email)) {
+        req.log.warn({ userId, email: upserted.email }, "Blocked disposable email on first login");
+        res.status(403).json({ error: "Sign-ups with temporary or disposable email addresses are not allowed." });
+        return;
+      }
+    } else if (existing.email && isDisposableEmail(existing.email)) {
+      // Catch any pre-existing disposable accounts that slipped through
+      req.log.warn({ userId, email: existing.email }, "Blocked pre-existing disposable email");
+      res.status(403).json({ error: "Sign-ups with temporary or disposable email addresses are not allowed." });
+      return;
     }
   } catch (err) {
     // DB unavailable or schema not yet migrated — req.userId is already set so

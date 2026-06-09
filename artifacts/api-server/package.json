@@ -16,6 +16,7 @@
     "@workspace/db": "workspace:*",
     "cookie-parser": "^1.4.7",
     "cors": "^2",
+    "disposable-email-domains": "^1.0.62",
     "dotenv": "^17.4.2",
     "drizzle-orm": "catalog:",
     "express": "^5",
