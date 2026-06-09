@@ -71,9 +71,7 @@ const clerkAppearance = {
   theme: shadcn,
   cssLayerName: "clerk",
   options: {
-    logoPlacement: "inside" as const,
-    logoLinkUrl: basePath || "/",
-    logoImageUrl: `${window.location.origin}${basePath}/logo.svg`,
+    logoPlacement: "none" as const,
   },
   variables: {
     colorPrimary: "hsl(158 64% 35%)",
@@ -91,21 +89,23 @@ const clerkAppearance = {
     rootBox: "w-full flex justify-center",
     cardBox: "bg-white dark:bg-zinc-950 rounded-2xl w-[440px] max-w-full overflow-hidden border border-zinc-200 dark:border-zinc-800",
     card: "!shadow-none !border-0 !bg-transparent !rounded-none",
+    header: "hidden",
     footer: "!shadow-none !border-0 !bg-transparent !rounded-none",
+    footerPages: { style: { display: "none" } },
     headerTitle: "text-2xl font-bold text-zinc-950 dark:text-zinc-50",
     headerSubtitle: "text-sm text-zinc-500 dark:text-zinc-400",
     socialButtonsBlockButtonText: "text-sm font-medium text-zinc-950 dark:text-zinc-50",
     formFieldLabel: "text-sm font-medium text-zinc-950 dark:text-zinc-50",
-    footerActionLink: "text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300",
+    footerActionLink: "text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300",
     footerActionText: "text-sm text-zinc-500 dark:text-zinc-400",
     dividerText: "text-xs text-zinc-500 dark:text-zinc-400",
-    identityPreviewEditButton: "text-indigo-600 dark:text-indigo-400",
+    identityPreviewEditButton: "text-emerald-600 dark:text-emerald-400",
     formFieldSuccessText: "text-sm text-green-600 dark:text-green-400",
     alertText: "text-sm text-red-600 dark:text-red-400",
-    logoBox: "flex justify-center mb-4",
-    logoImage: "h-8 object-contain",
+    logoBox: "hidden",
+    logoImage: "hidden",
     socialButtonsBlockButton: "bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 text-zinc-950 dark:text-zinc-50",
-    formButtonPrimary: "bg-indigo-600 hover:bg-indigo-700 text-white",
+    formButtonPrimary: "!bg-gradient-to-r !from-emerald-500 !to-teal-500 hover:!from-emerald-400 hover:!to-teal-400 !text-white !border-0 !shadow-none",
     formFieldInput: "bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-950 dark:text-zinc-50 placeholder:text-zinc-500 dark:placeholder:text-zinc-400",
     footerAction: "flex items-center justify-center gap-2",
     dividerLine: "bg-zinc-200 dark:bg-zinc-800",
@@ -116,10 +116,65 @@ const clerkAppearance = {
   },
 };
 
+function useHideClerkBranding() {
+  useEffect(() => {
+    const remove = () => {
+      // Find text nodes containing ONLY Clerk branding (not the sign-in/sign-up navigation links)
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      let node: Node | null;
+      while ((node = walker.nextNode())) {
+        const text = (node.textContent || "").trim();
+        if (text === "Secured by" || text === "Development mode") {
+          // Walk UP to the nearest block/flex ancestor that is a self-contained badge
+          // but stop before we reach a container that also holds auth navigation links
+          let target: HTMLElement | null = node.parentElement;
+          while (target && target !== document.body) {
+            // If this container also has a sign-in or sign-up link, stop — don't hide it
+            if (target.querySelector('a[href*="sign-in"], a[href*="sign-up"], a[href*="signin"], a[href*="signup"]')) break;
+            const d = getComputedStyle(target).display;
+            if (d === "block" || d === "flex" || d === "grid") {
+              target.style.setProperty("display", "none", "important");
+              break;
+            }
+            target = target.parentElement;
+          }
+        }
+      }
+    };
+    remove();
+    const observer = new MutationObserver(remove);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
+}
+
+function AuthBrandHeader({ title, subtitle }: { title: string; subtitle: string }) {
+  useHideClerkBranding();
+  return (
+    <div className="flex flex-col items-center gap-3 pb-2">
+      <a href={basePath || "/"} className="flex items-center gap-2.5 group">
+        <img
+          src={`${basePath}/logo.png`}
+          alt="KC Class BHW"
+          className="h-11 w-11 object-contain drop-shadow-sm transition-transform group-hover:scale-105"
+        />
+        <span className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-50">KC Class BHW</span>
+      </a>
+      <div className="text-center">
+        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">{title}</h1>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">{subtitle}</p>
+      </div>
+    </div>
+  );
+}
+
 function SignInPage() {
   return (
     <div className="flex min-h-[100dvh] items-center justify-center bg-zinc-50 dark:bg-zinc-950 px-4">
-      <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} />
+      <div className="w-[440px] max-w-full flex flex-col gap-4">
+        <AuthBrandHeader title="Welcome back" subtitle="Sign in to access your account" />
+        <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} />
+      </div>
     </div>
   );
 }
@@ -127,7 +182,10 @@ function SignInPage() {
 function SignUpPage() {
   return (
     <div className="flex min-h-[100dvh] items-center justify-center bg-zinc-50 dark:bg-zinc-950 px-4">
-      <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} />
+      <div className="w-[440px] max-w-full flex flex-col gap-4">
+        <AuthBrandHeader title="Create your account" subtitle="Join KC Class BHW today" />
+        <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} />
+      </div>
     </div>
   );
 }
@@ -192,20 +250,6 @@ function ClerkProviderWithRoutes() {
       appearance={clerkAppearance}
       signInUrl={`${basePath}/sign-in`}
       signUpUrl={`${basePath}/sign-up`}
-      localization={{
-        signIn: {
-          start: {
-            title: "Welcome back",
-            subtitle: "Sign in to access your account",
-          },
-        },
-        signUp: {
-          start: {
-            title: "Create your account",
-            subtitle: "Get started today",
-          },
-        },
-      }}
       routerPush={(to) => setLocation(stripBase(to))}
       routerReplace={(to) => setLocation(stripBase(to), { replace: true })}
     >

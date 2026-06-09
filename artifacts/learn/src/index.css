@@ -286,3 +286,13 @@
     background-size: 200px 200px;
   }
 }
+
+/* Hide Clerk branding — outside all layers so it always wins */
+.cl-footerPages,
+.cl-footer__poweredBy,
+[data-localization-key="poweredBy"],
+.cl-poweredByClerk,
+.cl-poweredByClerk-text,
+.cl-poweredByClerk-logo {
+  display: none !important;
+}
