@@ -230,14 +230,14 @@ function Navbar() {
             </Show>
 
             <Show when="signed-out">
-              <Link href="/sign-in">
-                <Button variant="ghost" className="text-sm font-semibold rounded-full px-4 text-foreground/70 hover:text-foreground hover:bg-white/50 dark:hover:bg-white/[0.07]">
-                  Sign In
-                </Button>
-              </Link>
               <Link href="/sign-up">
                 <Button className="text-sm font-bold rounded-full px-5 h-9 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white border-0 btn-glow transition-all hover:scale-105">
                   Get Started
+                </Button>
+              </Link>
+              <Link href="/sign-in">
+                <Button variant="ghost" className="text-sm font-semibold rounded-full px-4 text-foreground/70 hover:text-foreground hover:bg-white/50 dark:hover:bg-white/[0.07]">
+                  Sign In
                 </Button>
               </Link>
             </Show>
@@ -345,11 +345,11 @@ function Navbar() {
                 <Show when="signed-out">
                   <motion.div custom={navLinks.length} variants={mobileItemVariants} initial="hidden" animate="show">
                     <div className="flex gap-2 pt-2">
-                      <Link href="/sign-in" className="flex-1">
-                        <Button variant="outline" className="w-full rounded-xl font-semibold border-white/[0.12] dark:border-white/[0.1]">Sign In</Button>
-                      </Link>
                       <Link href="/sign-up" className="flex-1">
                         <Button className="w-full rounded-xl font-bold bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-0 btn-glow">Get Started</Button>
+                      </Link>
+                      <Link href="/sign-in" className="flex-1">
+                        <Button variant="outline" className="w-full rounded-xl font-semibold border-white/[0.12] dark:border-white/[0.1]">Sign In</Button>
                       </Link>
                     </div>
                   </motion.div>
