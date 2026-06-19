@@ -1,21 +1,27 @@
 import { Router, type IRouter } from "express";
 import { db, coursesTable, lessonsTable, progressTable, subscriptionsTable, downloadsTable, resourcesTable } from "@workspace/db";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { requireAuth } from "./auth";
 
 const router: IRouter = Router();
 
 // GET /dashboard/summary
 router.get("/dashboard/summary", requireAuth, async (req: any, res): Promise<void> => {
-  const [sub] = await db.select().from(subscriptionsTable).where(eq(subscriptionsTable.userId, req.userId));
-  const progress = await db.select().from(progressTable).where(eq(progressTable.userId, req.userId));
-  const completedLessons = progress.filter(p => p.completed).length;
-  const totalLessons = await db.$count(lessonsTable, eq(lessonsTable.isPublished, true));
-  const totalCourses = await db.$count(coursesTable, eq(coursesTable.isPublished, true));
-  const enrolledCourses = new Set(progress.map(p => p.courseId)).size;
-  const totalDownloads = await db.$count(downloadsTable, eq(downloadsTable.userId, req.userId));
+  // Run all independent queries in parallel instead of sequentially
+  const [sub, progress, totalLessons, totalCourses, totalDownloads] = await Promise.all([
+    db.select().from(subscriptionsTable).where(eq(subscriptionsTable.userId, req.userId)).then(r => r[0] ?? null),
+    db.select().from(progressTable).where(eq(progressTable.userId, req.userId)),
+    db.$count(lessonsTable, eq(lessonsTable.isPublished, true)),
+    db.$count(coursesTable, eq(coursesTable.isPublished, true)),
+    db.$count(downloadsTable, eq(downloadsTable.userId, req.userId)),
+  ]);
 
-  const isSubActive = sub?.status === "active" && (!sub.currentPeriodEnd || new Date(sub.currentPeriodEnd) >= new Date());
+  const completedLessons = progress.filter(p => p.completed).length;
+  const enrolledCourses = new Set(progress.map(p => p.courseId)).size;
+
+  const isSubActive =
+    sub?.status === "active" &&
+    (!sub.currentPeriodEnd || new Date(sub.currentPeriodEnd) >= new Date());
 
   res.json({
     totalCourses,

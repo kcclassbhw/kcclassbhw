@@ -16,6 +16,8 @@ router.get("/progress", requireAuth, async (req: any, res): Promise<void> => {
 });
 
 // POST /progress/:lessonId
+// Uses an atomic upsert on the (userId, lessonId) unique constraint to prevent
+// race conditions from concurrent requests creating duplicate rows.
 router.post("/progress/:lessonId", requireAuth, async (req: any, res): Promise<void> => {
   const params = MarkLessonCompleteParams.safeParse({ lessonId: req.params.lessonId });
   if (!params.success) { res.status(400).json({ error: "Invalid lessonId" }); return; }
@@ -25,24 +27,23 @@ router.post("/progress/:lessonId", requireAuth, async (req: any, res): Promise<v
   const [lesson] = await db.select().from(lessonsTable).where(eq(lessonsTable.id, params.data.lessonId));
   if (!lesson) { res.status(404).json({ error: "Lesson not found" }); return; }
 
-  const [existing] = await db.select().from(progressTable).where(
-    and(eq(progressTable.userId, req.userId), eq(progressTable.lessonId, params.data.lessonId))
-  );
-
-  let record;
-  if (existing) {
-    [record] = await db.update(progressTable)
-      .set({ completed: parsed.data.completed, lastAccessedAt: new Date() })
-      .where(eq(progressTable.id, existing.id))
-      .returning();
-  } else {
-    [record] = await db.insert(progressTable).values({
+  const [record] = await db
+    .insert(progressTable)
+    .values({
       userId: req.userId,
       lessonId: params.data.lessonId,
       courseId: lesson.courseId,
       completed: parsed.data.completed,
-    }).returning();
-  }
+      lastAccessedAt: new Date(),
+    })
+    .onConflictDoUpdate({
+      target: [progressTable.userId, progressTable.lessonId],
+      set: {
+        completed: parsed.data.completed,
+        lastAccessedAt: new Date(),
+      },
+    })
+    .returning();
 
   res.json(record);
 });

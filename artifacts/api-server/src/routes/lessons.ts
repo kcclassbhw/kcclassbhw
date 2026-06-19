@@ -51,13 +51,19 @@ router.get("/courses/:courseId/lessons/:id", async (req, res): Promise<void> => 
     .where(and(eq(lessonsTable.id, params.data.id), eq(lessonsTable.courseId, params.data.courseId), eq(lessonsTable.isPublished, true)));
   if (!lesson) { res.status(404).json({ error: "Lesson not found" }); return; }
 
-  // If not free, check subscription
+  // If not free, check subscription AND expiry
   if (!lesson.isFree) {
     const auth = getAuth(req);
     const userId = auth?.sessionClaims?.userId || auth?.userId;
     if (!userId) { res.status(403).json({ error: "Subscription required" }); return; }
+
     const [sub] = await db.select().from(subscriptionsTable).where(eq(subscriptionsTable.userId, userId as string));
-    if (!sub || sub.status !== "active") { res.status(403).json({ error: "Active subscription required" }); return; }
+    const isExpired = sub?.currentPeriodEnd && new Date(sub.currentPeriodEnd) < new Date();
+
+    if (!sub || sub.status !== "active" || isExpired) {
+      res.status(403).json({ error: "Active subscription required" });
+      return;
+    }
   }
 
   res.json(lesson);

@@ -1,4 +1,4 @@
-import { pgTable, text, serial, boolean, timestamp, index } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, boolean, timestamp, index, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -15,6 +15,9 @@ export const subscriptionsTable = pgTable("subscriptions", {
 }, (table) => [
   index("subscriptions_status_idx").on(table.status),
   index("subscriptions_period_end_idx").on(table.currentPeriodEnd),
+  // Unique constraint enforces DB-level replay protection: the same eSewa
+  // transaction ID can never be inserted twice, even under concurrent requests.
+  uniqueIndex("subscriptions_esewa_txn_unique").on(table.esewaTransactionId),
 ]);
 
 export const insertSubscriptionSchema = createInsertSchema(subscriptionsTable).omit({ id: true, createdAt: true, updatedAt: true });

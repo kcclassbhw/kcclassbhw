@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { getAuth } from "@clerk/express";
-import { db, usersTable, subscriptionsTable } from "@workspace/db";
+import { db, usersTable, subscriptionsTable, type User } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { isDisposableEmail } from "../lib/disposableEmails";
 
@@ -102,7 +102,7 @@ export const ensureUser = async (req: any, res: any, next: any): Promise<void> =
       .where(eq(usersTable.clerkId, userId as string));
 
     if (!existing) {
-      let upserted: typeof existing | undefined;
+      let upserted: User | undefined;
       try {
         await upsertUserFromClerk(userId as string);
         const [row] = await db.select().from(usersTable).where(eq(usersTable.clerkId, userId as string));

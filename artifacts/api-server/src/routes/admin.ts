@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, usersTable, subscriptionsTable, coursesTable, lessonsTable, resourcesTable, progressTable, announcementsTable } from "@workspace/db";
-import { eq, desc, and, lte, or, isNull, sql } from "drizzle-orm";
+import { eq, desc, and, or, isNull, sql } from "drizzle-orm";
 import {
   UpdateUserRoleParams,
   UpdateUserRoleBody,
@@ -14,19 +14,27 @@ const MONTHLY_PRICE = parseInt(process.env.ESEWA_MONTHLY_PRICE || "299", 10);
 const YEARLY_PRICE = parseInt(process.env.ESEWA_YEARLY_PRICE || "2399", 10);
 
 // GET /admin/stats
-router.get("/admin/stats", requireAdmin, async (req, res): Promise<void> => {
-  const totalUsers = await db.$count(usersTable);
+router.get("/admin/stats", requireAdmin, async (_req, res): Promise<void> => {
   const now = new Date();
-  const activeSubs = await db.select().from(subscriptionsTable).where(
-    and(
-      eq(subscriptionsTable.status, "active"),
-      or(isNull(subscriptionsTable.currentPeriodEnd), sql`${subscriptionsTable.currentPeriodEnd} >= ${now}`)
-    )
-  );
+
+  // Parallelise all independent DB queries
+  const [totalUsers, activeSubs, totalCourses, totalLessons, totalResources] = await Promise.all([
+    db.$count(usersTable),
+    db
+      .select()
+      .from(subscriptionsTable)
+      .where(
+        and(
+          eq(subscriptionsTable.status, "active"),
+          or(isNull(subscriptionsTable.currentPeriodEnd), sql`${subscriptionsTable.currentPeriodEnd} >= ${now}`),
+        ),
+      ),
+    db.$count(coursesTable),
+    db.$count(lessonsTable),
+    db.$count(resourcesTable),
+  ]);
+
   const activeSubscriptions = activeSubs.length;
-  const totalCourses = await db.$count(coursesTable);
-  const totalLessons = await db.$count(lessonsTable);
-  const totalResources = await db.$count(resourcesTable);
 
   const monthlyRevenue = activeSubs.reduce((sum, s) => {
     if (s.plan === "yearly") return sum + Math.round(YEARLY_PRICE / 12);
@@ -44,9 +52,11 @@ router.get("/admin/stats", requireAdmin, async (req, res): Promise<void> => {
 });
 
 // GET /admin/users
-router.get("/admin/users", requireAdmin, async (req, res): Promise<void> => {
-  const users = await db.select().from(usersTable).orderBy(usersTable.createdAt);
-  const subs = await db.select().from(subscriptionsTable);
+router.get("/admin/users", requireAdmin, async (_req, res): Promise<void> => {
+  const [users, subs] = await Promise.all([
+    db.select().from(usersTable).orderBy(usersTable.createdAt),
+    db.select().from(subscriptionsTable),
+  ]);
   const subMap = new Map(subs.map(s => [s.userId, s]));
 
   res.json(users.map(u => ({
@@ -61,9 +71,11 @@ router.get("/admin/users", requireAdmin, async (req, res): Promise<void> => {
 });
 
 // GET /admin/users/export — CSV download
-router.get("/admin/users/export", requireAdmin, async (req, res): Promise<void> => {
-  const users = await db.select().from(usersTable).orderBy(usersTable.createdAt);
-  const subs = await db.select().from(subscriptionsTable);
+router.get("/admin/users/export", requireAdmin, async (_req, res): Promise<void> => {
+  const [users, subs] = await Promise.all([
+    db.select().from(usersTable).orderBy(usersTable.createdAt),
+    db.select().from(subscriptionsTable),
+  ]);
   const subMap = new Map(subs.map(s => [s.userId, s]));
 
   const escape = (v: string) => `"${String(v).replace(/"/g, '""')}"`;
@@ -89,9 +101,11 @@ router.get("/admin/users/export", requireAdmin, async (req, res): Promise<void> 
 });
 
 // GET /admin/subscriptions — joined with user info
-router.get("/admin/subscriptions", requireAdmin, async (req, res): Promise<void> => {
-  const subs = await db.select().from(subscriptionsTable).orderBy(desc(subscriptionsTable.createdAt));
-  const users = await db.select().from(usersTable);
+router.get("/admin/subscriptions", requireAdmin, async (_req, res): Promise<void> => {
+  const [subs, users] = await Promise.all([
+    db.select().from(subscriptionsTable).orderBy(desc(subscriptionsTable.createdAt)),
+    db.select().from(usersTable),
+  ]);
   const userMap = new Map(users.map(u => [u.clerkId, u]));
 
   res.json(subs.map(s => ({
@@ -101,23 +115,23 @@ router.get("/admin/subscriptions", requireAdmin, async (req, res): Promise<void>
   })));
 });
 
-// POST /admin/subscriptions/grant — manually grant premium
+// POST /admin/subscriptions/grant — manually grant premium (atomic upsert)
 router.post("/admin/subscriptions/grant", requireAdmin, async (req, res): Promise<void> => {
   const { userId, plan } = req.body as { userId: string; plan: string };
   if (!userId || !plan) { res.status(400).json({ error: "userId and plan required" }); return; }
+  if (!["monthly", "yearly"].includes(plan)) { res.status(400).json({ error: "plan must be monthly or yearly" }); return; }
 
   const days = plan === "yearly" ? 365 : 30;
   const currentPeriodEnd = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
 
-  const [existing] = await db.select().from(subscriptionsTable).where(eq(subscriptionsTable.userId, userId));
-  if (existing) {
-    await db.update(subscriptionsTable)
-      .set({ status: "active", plan, currentPeriodEnd, cancelAtPeriodEnd: false })
-      .where(eq(subscriptionsTable.userId, userId));
-  } else {
-    await db.insert(subscriptionsTable)
-      .values({ userId, plan, status: "active", currentPeriodEnd, cancelAtPeriodEnd: false });
-  }
+  await db
+    .insert(subscriptionsTable)
+    .values({ userId, plan, status: "active", currentPeriodEnd, cancelAtPeriodEnd: false })
+    .onConflictDoUpdate({
+      target: subscriptionsTable.userId,
+      set: { status: "active", plan, currentPeriodEnd, cancelAtPeriodEnd: false },
+    });
+
   res.json({ success: true });
 });
 
@@ -131,9 +145,11 @@ router.delete("/admin/subscriptions/:userId/revoke", requireAdmin, async (req, r
 });
 
 // GET /admin/enrollment-stats — course enrollments from progress table
-router.get("/admin/enrollment-stats", requireAdmin, async (req, res): Promise<void> => {
-  const courses = await db.select().from(coursesTable).orderBy(coursesTable.title);
-  const progress = await db.select().from(progressTable);
+router.get("/admin/enrollment-stats", requireAdmin, async (_req, res): Promise<void> => {
+  const [courses, progress] = await Promise.all([
+    db.select().from(coursesTable).orderBy(coursesTable.title),
+    db.select().from(progressTable),
+  ]);
 
   const courseEnrollees = new Map<number, Set<string>>();
   const courseCompletions = new Map<number, number>();
@@ -146,21 +162,25 @@ router.get("/admin/enrollment-stats", requireAdmin, async (req, res): Promise<vo
     }
   }
 
-  const result = courses.map(c => ({
-    courseId: c.id,
-    title: c.title,
-    enrollments: courseEnrollees.get(c.id)?.size ?? 0,
-    lessonsCompleted: courseCompletions.get(c.id) ?? 0,
-    isPublished: c.isPublished,
-  })).sort((a, b) => b.enrollments - a.enrollments);
+  const result = courses
+    .map(c => ({
+      courseId: c.id,
+      title: c.title,
+      enrollments: courseEnrollees.get(c.id)?.size ?? 0,
+      lessonsCompleted: courseCompletions.get(c.id) ?? 0,
+      isPublished: c.isPublished,
+    }))
+    .sort((a, b) => b.enrollments - a.enrollments);
 
   res.json(result);
 });
 
 // GET /admin/activity — recent platform activity
-router.get("/admin/activity", requireAdmin, async (req, res): Promise<void> => {
-  const users = await db.select().from(usersTable).orderBy(desc(usersTable.createdAt)).limit(15);
-  const subs = await db.select().from(subscriptionsTable).orderBy(desc(subscriptionsTable.updatedAt)).limit(15);
+router.get("/admin/activity", requireAdmin, async (_req, res): Promise<void> => {
+  const [users, subs] = await Promise.all([
+    db.select().from(usersTable).orderBy(desc(usersTable.createdAt)).limit(15),
+    db.select().from(subscriptionsTable).orderBy(desc(subscriptionsTable.updatedAt)).limit(15),
+  ]);
   const userMap = new Map(users.map(u => [u.clerkId, u]));
 
   const events = [
@@ -178,7 +198,9 @@ router.get("/admin/activity", requireAdmin, async (req, res): Promise<void> => {
       detail: `${s.plan} plan`,
       at: s.updatedAt,
     })),
-  ].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime()).slice(0, 25);
+  ]
+    .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime())
+    .slice(0, 25);
 
   res.json(events);
 });
@@ -190,7 +212,11 @@ router.patch("/admin/users/:clerkId/role", requireAdmin, async (req, res): Promi
   const parsed = UpdateUserRoleBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
-  const [user] = await db.update(usersTable).set({ role: parsed.data.role }).where(eq(usersTable.clerkId, params.data.clerkId)).returning();
+  const [user] = await db
+    .update(usersTable)
+    .set({ role: parsed.data.role })
+    .where(eq(usersTable.clerkId, params.data.clerkId))
+    .returning();
   if (!user) { res.status(404).json({ error: "User not found" }); return; }
 
   const [sub] = await db.select().from(subscriptionsTable).where(eq(subscriptionsTable.userId, user.clerkId));
@@ -202,7 +228,7 @@ router.patch("/admin/users/:clerkId/role", requireAdmin, async (req, res): Promi
 
 // --- Announcements ---
 
-router.get("/admin/announcements", requireAdmin, async (req, res): Promise<void> => {
+router.get("/admin/announcements", requireAdmin, async (_req, res): Promise<void> => {
   const announcements = await db.select().from(announcementsTable).orderBy(desc(announcementsTable.createdAt));
   res.json(announcements);
 });

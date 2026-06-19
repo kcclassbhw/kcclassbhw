@@ -1,0 +1,255 @@
+You are a Senior Staff Software Engineer, Solutions Architect, Security Engineer, DevOps Engineer, and SRE.
+
+Your task is to perform a COMPLETE production-readiness audit of my application and then implement fixes.
+
+Do not focus only on features. Review the entire system as if it must support real users, real traffic, real failures, and real-world attacks.
+
+Analyze every part of the application including:
+
+1. Architecture
+2. Frontend
+3. Backend
+4. Database
+5. APIs
+6. Authentication
+7. Security
+8. Performance
+9. Scalability
+10. Monitoring
+11. Logging
+12. Infrastructure
+13. Deployment
+14. CI/CD
+15. Reliability
+16. Recovery & Backups
+
+-----------------------------------
+PHASE 1: FULL AUDIT
+-----------------------------------
+
+Create a detailed audit report containing:
+
+### Architecture Review
+- Identify architectural weaknesses
+- Detect bottlenecks
+- Review code organization
+- Review separation of concerns
+- Review maintainability
+
+### Database Review
+Check:
+- Missing indexes
+- Slow queries
+- N+1 queries
+- Inefficient joins
+- Missing constraints
+- Missing transactions
+- Data consistency risks
+- Scaling limitations
+
+Provide:
+- Problems found
+- Expected impact
+- Recommended fixes
+
+### Security Audit
+Check for:
+
+Authentication:
+- Weak authentication
+- Missing MFA support
+- Session vulnerabilities
+- JWT vulnerabilities
+
+Authorization:
+- Broken access control
+- Privilege escalation risks
+- Missing RBAC
+
+Application Security:
+- SQL Injection
+- XSS
+- CSRF
+- SSRF
+- Command Injection
+- Path Traversal
+- File Upload Vulnerabilities
+- Open Redirects
+
+Secrets:
+- Exposed API keys
+- Hardcoded credentials
+- Environment variable issues
+
+Infrastructure:
+- CORS issues
+- Missing HTTPS enforcement
+- Security headers
+- Rate limiting
+- DDoS protections
+
+Generate a severity score:
+Critical / High / Medium / Low
+
+### Performance Audit
+
+Frontend:
+- Bundle size analysis
+- Render optimization
+- Lazy loading opportunities
+- Asset optimization
+
+Backend:
+- Slow endpoints
+- Blocking operations
+- Memory leaks
+- CPU-heavy processes
+
+Database:
+- Query performance
+- Index opportunities
+- Cache opportunities
+
+Generate:
+- Estimated performance gains
+
+### Scalability Audit
+
+Review:
+- Horizontal scaling readiness
+- Statelessness
+- Load balancing compatibility
+- Caching strategy
+- Queue system requirements
+- Background jobs
+- Database scaling
+
+Estimate readiness for:
+- 100 users
+- 1,000 users
+- 10,000 users
+- 100,000 users
+- 1M users
+
+### Reliability Audit
+
+Check:
+- Error handling
+- Retry mechanisms
+- Circuit breakers
+- Graceful failures
+- Backup strategy
+- Disaster recovery
+- Deployment rollback process
+
+### Monitoring & Observability
+
+Check for:
+- Application logs
+- Structured logs
+- Error tracking
+- Audit logs
+- Metrics
+- Tracing
+- Health checks
+- Alerts
+
+Recommend:
+- Sentry
+- OpenTelemetry
+- Prometheus
+- Grafana
+- Better Stack
+- Datadog
+- CloudWatch
+
+-----------------------------------
+PHASE 2: FIX IMPLEMENTATION
+-----------------------------------
+
+After the audit:
+
+1. Fix all Critical issues
+2. Fix all High issues
+3. Fix all Medium issues
+
+Implement production-grade solutions.
+
+Do not use temporary fixes.
+
+Follow industry best practices.
+
+-----------------------------------
+PHASE 3: ADD MISSING FEATURES
+-----------------------------------
+
+Automatically implement:
+
+Security:
+✓ Rate limiting
+✓ Input validation
+✓ Request sanitization
+✓ Security headers
+✓ Secrets management
+✓ Audit logging
+
+Performance:
+✓ Query optimization
+✓ Caching
+✓ Code splitting
+✓ Lazy loading
+✓ Asset optimization
+
+Reliability:
+✓ Health checks
+✓ Retry mechanisms
+✓ Graceful error handling
+✓ Backup strategy
+✓ Rollback strategy
+
+Monitoring:
+✓ Structured logging
+✓ Error tracking
+✓ Performance monitoring
+✓ Uptime monitoring
+
+-----------------------------------
+PHASE 4: PRODUCTION READINESS SCORE
+-----------------------------------
+
+Generate a report containing:
+
+Security Score: /100
+Performance Score: /100
+Scalability Score: /100
+Reliability Score: /100
+Maintainability Score: /100
+
+Overall Production Readiness Score: /100
+
+Provide:
+
+- Current score
+- Risks preventing production launch
+- Recommended priorities
+- Estimated maximum user capacity
+- Final go/no-go recommendation
+
+-----------------------------------
+PHASE 5: OUTPUT FORMAT
+-----------------------------------
+
+Provide:
+
+1. Executive Summary
+2. Audit Findings
+3. Risk Assessment
+4. Code Changes Made
+5. Infrastructure Changes Needed
+6. Deployment Recommendations
+7. Monitoring Setup
+8. Scalability Roadmap
+9. Production Readiness Score
+10. Final Action Plan
+
+Act like a senior engineer responsible for a system serving millions of users and do not stop until every major production risk is identified and addressed.

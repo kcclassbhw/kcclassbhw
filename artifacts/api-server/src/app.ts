@@ -23,6 +23,11 @@ app.set("trust proxy", 1);
 app.use(
   pinoHttp({
     logger,
+    // Assign a request ID to every request so errors can be correlated
+    genReqId: (req) => {
+      const existing = req.headers["x-request-id"];
+      return (Array.isArray(existing) ? existing[0] : existing) ?? crypto.randomUUID();
+    },
     serializers: {
       req(req) {
         return {
@@ -41,7 +46,25 @@ app.use(
 );
 
 // HTTP security headers — removes X-Powered-By, adds HSTS, CSP, etc.
-app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
+// crossOriginResourcePolicy: cross-origin is required so the frontend
+// (on a different origin) can load images served from the API.
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    // Content-Security-Policy: allow Clerk and YouTube iframes
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "https://clerk.accounts.dev", "https://*.clerk.accounts.dev"],
+        frameSrc: ["'self'", "https://www.youtube.com", "https://youtube.com", "https://*.clerk.accounts.dev"],
+        imgSrc: ["'self'", "data:", "https:", "blob:"],
+        connectSrc: ["'self'", "https://*.clerk.accounts.dev", "https://api.clerk.com"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        fontSrc: ["'self'", "data:"],
+      },
+    },
+  }),
+);
 
 // Clerk Frontend API proxy — only active in production with live keys.
 // In development (NODE_ENV=development) this is a no-op passthrough.
@@ -66,8 +89,9 @@ const corsOrigin: string[] | boolean = process.env.CORS_ORIGIN
     : true; // dev: allow all origins
 app.use(cors({ credentials: true, origin: corsOrigin }));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Body parsers — explicit limits prevent memory exhaustion from large payloads.
+app.use(express.json({ limit: "256kb" }));
+app.use(express.urlencoded({ extended: true, limit: "256kb" }));
 
 // ── Rate limiting ─────────────────────────────────────────────────────────────
 // General limiter: 120 requests per 15 minutes per IP (8/min average).
@@ -91,9 +115,20 @@ const paymentLimiter = rateLimit({
   message: { error: "Too many payment requests — please wait before trying again" },
 });
 
+// Admin limiter: 200 requests per 15 minutes — admins do bulk work but
+// we still protect against accidental runaway scripts or credential theft.
+const adminLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many admin requests — please wait a moment" },
+});
+
 app.use("/api", generalLimiter);
 app.use("/api/subscriptions/checkout", paymentLimiter);
 app.use("/api/subscriptions/verify", paymentLimiter);
+app.use("/api/admin", adminLimiter);
 
 // ── Clerk auth middleware ─────────────────────────────────────────────────────
 // In production the publishable key is derived from the request host when
@@ -111,19 +146,21 @@ app.use(
 // Render's health check pings GET /healthz (configured in render.yaml).
 // This must live at the app root — NOT under /api — so it is reachable
 // without going through the API router or any auth middleware.
+// The full deep health check (including DB) lives at /api/healthz in the router.
 app.get("/healthz", (_req, res) => {
-  res.json({ status: "ok" });
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
 app.use("/api", router);
 
 // ── Global error handler ──────────────────────────────────────────────────────
 app.use((err: any, req: any, res: any, _next: any) => {
-  logger.error({ err, url: req.url, method: req.method }, "Unhandled error");
+  const requestId = (req as any).id ?? "unknown";
+  logger.error({ err, url: req.url, method: req.method, requestId }, "Unhandled error");
   const status = err?.status ?? err?.statusCode ?? 500;
   const message =
     status < 500 ? (err?.message ?? "Bad request") : "Internal server error";
-  res.status(status).json({ error: message });
+  res.status(status).json({ error: message, requestId });
 });
 
 export default app;
