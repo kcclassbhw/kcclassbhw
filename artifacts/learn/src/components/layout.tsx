@@ -112,6 +112,8 @@ function Navbar() {
             <img
               src="/logo.png"
               alt="KC Class BHW"
+              width={40}
+              height={40}
               className="h-10 w-10 object-contain transition-transform group-hover:scale-105 drop-shadow-sm"
             />
             <span className="font-display font-bold tracking-tight text-base sm:text-lg hidden sm:inline">KC Class BHW</span>

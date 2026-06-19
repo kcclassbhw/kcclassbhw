@@ -285,7 +285,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4 md:px-6 max-w-6xl">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6 sm:gap-8 mb-8 sm:mb-10">
             <div className="flex items-center gap-2.5">
-              <img src="/logo.png" alt="KC Class BHW" className="h-11 w-11 object-contain drop-shadow-sm" />
+              <img src="/logo.png" alt="KC Class BHW" width={44} height={44} className="h-11 w-11 object-contain drop-shadow-sm" />
               <span className="font-display font-bold text-xl">KC Class BHW</span>
             </div>
             <div className="flex gap-3">

@@ -73,7 +73,7 @@ export default function PricingPage() {
             Full access to all B.Ed English courses, PDF notes, and resources from KC Class BHW.
           </p>
           <div className="inline-flex items-center gap-2 mt-5 px-4 py-2 glass-card rounded-full text-sm font-semibold text-foreground/60">
-            <img src="https://esewa.com.np/common/images/esewa_logo.png" alt="eSewa" className="h-5 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            <img src="https://esewa.com.np/common/images/esewa_logo.png" alt="eSewa" width={80} height={20} loading="lazy" className="h-5 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
             Secure payment via eSewa
           </div>
         </div>
