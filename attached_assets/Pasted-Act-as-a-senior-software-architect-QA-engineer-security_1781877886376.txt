@@ -1,0 +1,84 @@
+Act as a senior software architect, QA engineer, security auditor, and product manager.
+
+Analyze my web application thoroughly as if it is about to be launched for real-world production use. Evaluate every aspect of the application and provide a detailed report with findings, risks, severity levels, and actionable recommendations.
+
+Review the application in the following categories:
+
+1. Functionality
+Verify all user flows work correctly.
+Check authentication, registration, login, logout, and password recovery.
+Validate forms, data submission, and error handling.
+Test edge cases and unexpected user behavior.
+Identify missing features required for production.
+2. UI/UX
+Evaluate visual consistency and design quality.
+Review navigation, information architecture, and usability.
+Check responsiveness across desktop, tablet, and mobile devices.
+Identify accessibility issues (WCAG compliance).
+Suggest improvements for user engagement and retention.
+3. Performance
+Analyze page load speed and rendering performance.
+Identify unnecessary re-renders and inefficient code.
+Check image optimization, caching, lazy loading, and bundle size.
+Recommend optimizations for scalability.
+4. Security
+Check for authentication and authorization vulnerabilities.
+Review protection against XSS, CSRF, SQL injection, and API abuse.
+Evaluate session management and token security.
+Verify secure handling of secrets and environment variables.
+Identify any potential attack vectors.
+5. Database & Data Integrity
+Review database design and relationships.
+Check validation on both client and server.
+Evaluate backup and recovery readiness.
+Identify risks of data loss or corruption.
+6. API Quality
+Analyze API design and consistency.
+Review error handling and status codes.
+Check authentication and rate limiting.
+Verify API security and input validation.
+7. Production Readiness
+Identify missing infrastructure requirements.
+Review logging, monitoring, and observability.
+Check deployment readiness.
+Evaluate scalability under high traffic.
+Assess disaster recovery preparedness.
+8. SEO & Discoverability
+Review metadata, structured data, sitemap, and robots.txt.
+Check social sharing previews.
+Identify SEO improvements.
+9. Educational Platform Features (if applicable)
+Student dashboard
+Teacher/Admin dashboard
+Course management
+Progress tracking
+Assignments and assessments
+Notifications
+Reports and analytics
+10. Code Quality
+Review architecture and folder structure.
+Identify technical debt.
+Check maintainability and scalability.
+Evaluate naming conventions, reusable components, and best practices.
+Output Format
+
+For each issue found, provide:
+
+Category
+Issue Description
+Severity (Critical / High / Medium / Low)
+Why It Matters
+Recommended Fix
+Example Implementation (if applicable)
+
+Finally, provide:
+
+Overall Production Readiness Score (0–100)
+Security Score
+Performance Score
+UX Score
+Scalability Score
+Top 10 Improvements Before Launch
+A final verdict: Not Ready, Mostly Ready, or Production Ready with justification.
+
+Be extremely critical and evaluate the application as if thousands of real users will use it in production.
