@@ -6,8 +6,22 @@ import { isDisposableEmail } from "../lib/disposableEmails";
 
 const router: IRouter = Router();
 
+/**
+ * Safe wrapper around getAuth() that returns null instead of throwing when
+ * clerkMiddleware has not been registered (e.g. dev mode without Clerk configured).
+ * Without this, every route — including public ones — crashes with
+ * "clerkMiddleware should be registered before using getAuth".
+ */
+export function safeGetAuth(req: any) {
+  try {
+    return getAuth(req);
+  } catch {
+    return null;
+  }
+}
+
 export const requireAuth = (req: any, res: any, next: any): void => {
-  const auth = getAuth(req);
+  const auth = safeGetAuth(req);
   const userId = auth?.sessionClaims?.userId || auth?.userId;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
@@ -18,7 +32,7 @@ export const requireAuth = (req: any, res: any, next: any): void => {
 };
 
 export const requireAdmin = async (req: any, res: any, next: any): Promise<void> => {
-  const auth = getAuth(req);
+  const auth = safeGetAuth(req);
   const userId = auth?.sessionClaims?.userId || auth?.userId;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
@@ -34,7 +48,7 @@ export const requireAdmin = async (req: any, res: any, next: any): Promise<void>
 };
 
 export const requireActiveSubscription = async (req: any, res: any, next: any): Promise<void> => {
-  const auth = getAuth(req);
+  const auth = safeGetAuth(req);
   const userId = auth?.sessionClaims?.userId || auth?.userId;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
@@ -90,7 +104,7 @@ export async function upsertUserFromClerk(clerkId: string): Promise<void> {
  * The Clerk webhook keeps data in sync after that.
  */
 export const ensureUser = async (req: any, res: any, next: any): Promise<void> => {
-  const auth = getAuth(req);
+  const auth = safeGetAuth(req);
   const userId = auth?.sessionClaims?.userId || auth?.userId;
   if (!userId) { next(); return; }
   req.userId = userId as string;

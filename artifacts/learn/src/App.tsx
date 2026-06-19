@@ -34,9 +34,14 @@ const clerkPubKey = publishableKeyFromHost(
   import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
 );
 
-// Empty in dev (Clerk hits dev FAPI directly), auto-set in prod.
-// Do NOT gate on NODE_ENV — the empty dev value is intentional.
-const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
+// Only use the Clerk proxy URL in a production build (import.meta.env.PROD).
+// In Vite's dev server (import.meta.env.PROD = false), the proxy URL points to
+// the Replit dev domain which does NOT support the `clerk.` subdomain that Clerk
+// prepends to construct the script URL — causing Clerk JS to fail to load entirely.
+// In production, Vite bakes in the correct production proxy URL at build time.
+const clerkProxyUrl: string | undefined = import.meta.env.PROD
+  ? (import.meta.env.VITE_CLERK_PROXY_URL as string | undefined)
+  : undefined;
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 function stripBase(path: string): string {

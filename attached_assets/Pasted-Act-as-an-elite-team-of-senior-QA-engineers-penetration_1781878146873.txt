@@ -1,0 +1,311 @@
+Act as an elite team of senior QA engineers, penetration testers, security researchers, SREs, performance engineers, accessibility auditors, product managers, and production-readiness reviewers.
+
+Your mission is to perform an extreme, adversarial, enterprise-grade audit of this web application. Assume the application will be used by thousands of real users and that any bug, security issue, performance bottleneck, or usability problem could cause financial, operational, reputational, or data-loss damage.
+
+Do not be lenient. Actively attempt to break the application.
+
+Testing Objectives
+
+Perform a complete assessment covering:
+
+Functional Testing
+UI/UX Testing
+Security Testing
+API Testing
+Authentication & Authorization Testing
+Database Integrity Testing
+Load & Stress Testing
+Accessibility Testing
+SEO Testing
+Reliability Testing
+Production Readiness
+Edge Cases
+Abuse Cases
+Business Logic Attacks
+Data Validation
+Scalability
+Observability
+Phase 1: Application Mapping
+
+First:
+
+Discover every page.
+Discover every route.
+Discover every API endpoint.
+Identify all forms.
+Identify all user roles.
+Identify all protected resources.
+Identify all third-party integrations.
+Map the complete user journey.
+
+Create a full application inventory before testing.
+
+Phase 2: Functional Destruction Testing
+
+Test every feature with:
+
+Valid inputs
+Invalid inputs
+Empty inputs
+Very large inputs
+Unicode characters
+Emoji characters
+HTML payloads
+JavaScript payloads
+SQL payloads
+Unexpected workflows
+
+Attempt:
+
+Double submission
+Rapid clicking
+Browser refreshes during actions
+Multiple tabs
+Interrupted network requests
+Offline/online switching
+
+Document every failure.
+
+Phase 3: Authentication Attack Testing
+
+Test:
+
+Registration
+Login
+Logout
+Password reset
+Session expiration
+Remember me
+Account recovery
+
+Attempt:
+
+Session hijacking
+Session fixation
+Brute force attacks
+Credential stuffing scenarios
+JWT manipulation
+Cookie tampering
+Token replay
+Expired token reuse
+Role escalation
+Unauthorized resource access
+Phase 4: Authorization Testing
+
+Verify:
+
+Student cannot access admin resources
+Teacher cannot access super admin resources
+Users cannot access other users' data
+
+Attempt:
+
+IDOR attacks
+Parameter manipulation
+URL guessing
+Hidden endpoint access
+Direct API access
+
+Test every role combination.
+
+Phase 5: Security Penetration Testing
+
+Attempt:
+
+XSS
+Reflected XSS
+Stored XSS
+DOM XSS
+Injection
+SQL Injection
+NoSQL Injection
+Command Injection
+LDAP Injection
+API Abuse
+Missing authorization
+Excessive data exposure
+Mass assignment
+BOLA
+Broken authentication
+CSRF
+
+Test every state-changing request.
+
+File Upload Testing
+
+Attempt:
+
+Executable uploads
+Polyglot files
+Oversized files
+MIME spoofing
+SVG payloads
+Sensitive Data Exposure
+
+Search for:
+
+API keys
+Secrets
+Tokens
+Internal URLs
+Debug information
+Stack traces
+Phase 6: Performance Torture Testing
+
+Test:
+
+100 concurrent users
+500 concurrent users
+1,000 concurrent users
+5,000 concurrent users
+
+Measure:
+
+TTFB
+FCP
+LCP
+INP
+CLS
+Memory usage
+CPU usage
+
+Identify:
+
+Memory leaks
+Slow queries
+Blocking operations
+Large bundles
+Unoptimized assets
+Phase 7: Reliability & Failure Testing
+
+Simulate:
+
+Slow internet
+Packet loss
+API failures
+Database failures
+Timeout conditions
+Third-party service failures
+
+Verify:
+
+Graceful degradation
+Retry mechanisms
+Error handling
+User recovery paths
+Phase 8: Accessibility Audit
+
+Check:
+
+WCAG 2.1 AA compliance
+Keyboard-only navigation
+Screen reader support
+Focus management
+Color contrast
+Semantic HTML
+Form accessibility
+
+Score accessibility from 0–100.
+
+Phase 9: Mobile & Cross-Browser Testing
+
+Test:
+
+Chrome
+Firefox
+Safari
+Edge
+
+Devices:
+
+Small Android phones
+Large Android phones
+iPhone
+Tablet
+Desktop
+
+Check:
+
+Layout breaking
+Overflow issues
+Touch usability
+Performance degradation
+Phase 10: Production Readiness Audit
+
+Verify:
+
+Logging
+Monitoring
+Analytics
+Backups
+Disaster recovery
+Rate limiting
+Caching
+CDN usage
+Error tracking
+Security headers
+Environment configuration
+Educational Platform Specific Tests
+
+If this is an LMS/Education platform:
+
+Test:
+
+Course enrollment
+Progress tracking
+Video streaming
+Quiz integrity
+Exam cheating vectors
+Assignment submission
+Attendance
+Result calculation
+Certificate generation
+Admin controls
+
+Attempt to manipulate:
+
+Grades
+Completion status
+Certificates
+User progress
+Final Report Format
+
+Produce:
+
+Executive Summary
+Application Architecture Analysis
+Critical Vulnerabilities
+High Severity Issues
+Medium Severity Issues
+Low Severity Issues
+Performance Bottlenecks
+UX Problems
+Accessibility Issues
+Scalability Risks
+Security Risks
+Production Risks
+Exploitable Attack Scenarios
+
+For each issue include:
+
+Severity
+Impact
+Reproduction Steps
+Evidence
+Root Cause
+Recommended Fix
+
+Then provide:
+
+Security Score (0–100)
+Performance Score (0–100)
+Accessibility Score (0–100)
+Scalability Score (0–100)
+Reliability Score (0–100)
+Production Readiness Score (0–100)
+
+Finally answer:
+
+"Would you approve this application for production use with 10,000+ users? Why or why not?"
+
+Be ruthless, skeptical, and assume every feature is vulnerable until proven otherwise. Focus on discovering failures, weaknesses, bottlenecks, and attack paths rather than confirming that things work.

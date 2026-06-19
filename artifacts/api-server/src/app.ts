@@ -130,26 +130,37 @@ app.use("/api/subscriptions/checkout", paymentLimiter);
 app.use("/api/subscriptions/verify", paymentLimiter);
 app.use("/api/admin", adminLimiter);
 
-// ── Clerk auth middleware ─────────────────────────────────────────────────────
-// In production the publishable key is derived from the request host when
-// using the Clerk proxy. In development it always falls back to the env var.
-app.use(
-  clerkMiddleware((req) => ({
-    publishableKey: publishableKeyFromHost(
-      getClerkProxyHost(req) ?? "",
-      process.env.CLERK_PUBLISHABLE_KEY,
-    ),
-  })),
-);
-
 // ── Root health check ─────────────────────────────────────────────────────────
+// IMPORTANT: registered BEFORE clerkMiddleware so it is always reachable even
+// when Clerk env vars are absent (e.g. dev mode without keys configured).
 // Render's health check pings GET /healthz (configured in render.yaml).
-// This must live at the app root — NOT under /api — so it is reachable
-// without going through the API router or any auth middleware.
 // The full deep health check (including DB) lives at /api/healthz in the router.
 app.get("/healthz", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
+
+// ── Clerk auth middleware ─────────────────────────────────────────────────────
+// Only applied when CLERK_SECRET_KEY is configured. Without it the middleware
+// calls assertValidSecretKey() on every request and crashes ALL routes —
+// including public ones — with "Missing Clerk Secret Key". By making it
+// conditional, unauthenticated routes work in dev without Clerk keys and
+// requireAuth / requireAdmin simply return 401 (correct behaviour).
+if (process.env.CLERK_SECRET_KEY) {
+  app.use(
+    clerkMiddleware((req) => ({
+      publishableKey: publishableKeyFromHost(
+        getClerkProxyHost(req) ?? "",
+        process.env.CLERK_PUBLISHABLE_KEY,
+      ),
+    })),
+  );
+} else {
+  if (process.env.NODE_ENV === "production") {
+    logger.error("CLERK_SECRET_KEY is not set in production — all authenticated routes will return 401. Set this variable immediately.");
+  } else {
+    logger.warn("CLERK_SECRET_KEY not set — Clerk auth middleware disabled (normal for dev without Clerk configured)");
+  }
+}
 
 app.use("/api", router);
 

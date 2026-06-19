@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, progressTable, lessonsTable } from "@workspace/db";
+import { db, progressTable, lessonsTable, subscriptionsTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import {
   MarkLessonCompleteParams,
@@ -26,6 +26,22 @@ router.post("/progress/:lessonId", requireAuth, async (req: any, res): Promise<v
 
   const [lesson] = await db.select().from(lessonsTable).where(eq(lessonsTable.id, params.data.lessonId));
   if (!lesson) { res.status(404).json({ error: "Lesson not found" }); return; }
+
+  // SECURITY (CRIT-02): Premium lessons require an active subscription before
+  // progress can be recorded. Without this check, any authenticated user could
+  // mark every lesson complete by calling this endpoint directly, bypassing the
+  // subscription gate and corrupting completion stats.
+  if (!lesson.isFree) {
+    const [sub] = await db
+      .select()
+      .from(subscriptionsTable)
+      .where(eq(subscriptionsTable.userId, req.userId));
+    const isExpired = sub?.currentPeriodEnd && new Date(sub.currentPeriodEnd) < new Date();
+    if (!sub || sub.status !== "active" || isExpired) {
+      res.status(403).json({ error: "Active subscription required to track progress on premium lessons" });
+      return;
+    }
+  }
 
   const [record] = await db
     .insert(progressTable)

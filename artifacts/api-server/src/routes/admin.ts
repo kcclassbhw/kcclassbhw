@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, usersTable, subscriptionsTable, coursesTable, lessonsTable, resourcesTable, progressTable, announcementsTable } from "@workspace/db";
+import { db, usersTable, subscriptionsTable, coursesTable, lessonsTable, resourcesTable, progressTable, announcementsTable, auditLogsTable } from "@workspace/db";
 import { eq, desc, and, or, isNull, sql } from "drizzle-orm";
 import {
   UpdateUserRoleParams,
@@ -71,7 +71,9 @@ router.get("/admin/users", requireAdmin, async (_req, res): Promise<void> => {
 });
 
 // GET /admin/users/export — CSV download
-router.get("/admin/users/export", requireAdmin, async (_req, res): Promise<void> => {
+// SECURITY: every export is audit-logged with the admin's ID and row count
+// so that data exfiltration via a compromised admin account is detectable.
+router.get("/admin/users/export", requireAdmin, async (req: any, res): Promise<void> => {
   const [users, subs] = await Promise.all([
     db.select().from(usersTable).orderBy(usersTable.createdAt),
     db.select().from(subscriptionsTable),
@@ -94,6 +96,16 @@ router.get("/admin/users/export", requireAdmin, async (_req, res): Promise<void>
       ].map(escape).join(",");
     }),
   ];
+
+  // Audit log — fire and forget; never block the response
+  db.insert(auditLogsTable)
+    .values({
+      adminId: req.userId,
+      action: "users.export",
+      targetType: "users",
+      metadata: { rowCount: users.length },
+    })
+    .catch(() => {});
 
   res.setHeader("Content-Type", "text/csv");
   res.setHeader("Content-Disposition", `attachment; filename="users-${new Date().toISOString().split("T")[0]}.csv"`);
@@ -218,6 +230,17 @@ router.patch("/admin/users/:clerkId/role", requireAdmin, async (req, res): Promi
     .where(eq(usersTable.clerkId, params.data.clerkId))
     .returning();
   if (!user) { res.status(404).json({ error: "User not found" }); return; }
+
+  // Audit log role change — fire and forget
+  db.insert(auditLogsTable)
+    .values({
+      adminId: (req as any).userId,
+      action: "users.role_change",
+      targetType: "user",
+      targetId: params.data.clerkId,
+      metadata: { newRole: parsed.data.role },
+    })
+    .catch(() => {});
 
   const [sub] = await db.select().from(subscriptionsTable).where(eq(subscriptionsTable.userId, user.clerkId));
   res.json({

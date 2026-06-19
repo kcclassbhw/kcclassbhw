@@ -5,4 +5,6 @@ Disallow: /settings
 Disallow: /admin
 Disallow: /payment
 
+# Static sitemap (4 core pages). For a fully dynamic sitemap including all course
+# pages, use the API endpoint: https://<your-api-url>/api/public/sitemap.xml
 Sitemap: https://kcclassbhw.vercel.app/sitemap.xml

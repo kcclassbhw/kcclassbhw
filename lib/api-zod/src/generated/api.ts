@@ -523,7 +523,7 @@ export const UpdateUserRoleParams = zod.object({
 });
 
 export const UpdateUserRoleBody = zod.object({
-  role: zod.string(),
+  role: zod.enum(["user", "admin"]),
 });
 
 export const UpdateUserRoleResponse = zod.object({

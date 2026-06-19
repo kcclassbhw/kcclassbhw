@@ -97,7 +97,25 @@ export default function CourseDetailPage() {
   const badgeClass = categoryColor[course.category] || "bg-violet-500/15 text-violet-600 dark:text-violet-400 border-violet-500/20";
   const gradient = categoryGradient[course.category] || "from-violet-400 to-purple-500";
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Course",
+    "name": course.title,
+    "description": course.description,
+    "provider": { "@type": "Organization", "name": "KC Class BHW", "sameAs": "https://kcclassbhw.vercel.app" },
+    ...(course.thumbnailUrl && { "image": course.thumbnailUrl }),
+    ...(course.totalDurationMinutes && { "timeRequired": `PT${course.totalDurationMinutes}M` }),
+    "educationalLevel": "Higher Education",
+    "inLanguage": "en",
+    "isAccessibleForFree": course.isFree,
+  };
+
   return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/<\//g, "<\\/") }}
+      />
     <div className="container mx-auto px-4 md:px-6 py-10 max-w-6xl">
       <Link href="/courses" className="inline-flex items-center text-sm font-semibold text-foreground/50 hover:text-foreground mb-8 transition-colors group">
         <ArrowLeft className="mr-1.5 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
@@ -227,5 +245,6 @@ export default function CourseDetailPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

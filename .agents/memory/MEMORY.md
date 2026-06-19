@@ -2,3 +2,5 @@
 - [Production grade checklist](production-grade.md) — Rate limiting (express-rate-limit), graceful shutdown (SIGTERM/SIGINT), trust proxy, vercel.json SPA routing — all applied
 - [Clerk proxy local dev](clerk-proxy-local.md) — Never set VITE_CLERK_PROXY_URL with pk_test_ keys; proxy only works in production with pk_live_ keys
 - [eSewa payment security](esewa-security.md) — Plan validated server-side; amount cross-checked against plan price; FRONTEND_URL env var used (not Origin header) for redirect URLs
+- [Security audit fixes](security-audit-fixes.md) — Full adversarial audit completed; all CRIT/HIGH/MED/LOW fixes applied; one pending manual step (run migration 0002 in prod)
+- [Clerk dev runtime fixes](clerk-dev-runtime.md) — Two runtime crashes when CLERK_SECRET_KEY absent; safeGetAuth pattern + import.meta.env.PROD proxy gate both required

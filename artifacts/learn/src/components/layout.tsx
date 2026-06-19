@@ -19,6 +19,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-[100dvh] flex-col bg-background relative">
+      {/* Skip to main content — keyboard / screen-reader accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-4 focus:left-4 focus:px-4 focus:py-2 focus:rounded-lg focus:bg-emerald-500 focus:text-white focus:font-semibold focus:text-sm focus:shadow-lg"
+      >
+        Skip to main content
+      </a>
+
       {/* Global gradient orbs */}
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
         <div className="absolute -top-[30%] -left-[15%] w-[70%] h-[70%] rounded-full bg-emerald-500/[0.12] dark:bg-emerald-500/[0.09] blur-[130px] animate-drift" />
@@ -28,7 +36,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       <Navbar />
       <div className="flex flex-1">
-        <main className="flex-1 min-w-0">{children}</main>
+        <main id="main-content" className="flex-1 min-w-0">{children}</main>
       </div>
     </div>
   );

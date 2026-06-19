@@ -118,6 +118,7 @@ export default function LessonPage() {
                 className="w-full h-full border-0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
+                loading="lazy"
               />
             ) : lesson.videoUrl ? (
               <video src={lesson.videoUrl} controls className="w-full h-full object-contain" controlsList="nodownload" />
