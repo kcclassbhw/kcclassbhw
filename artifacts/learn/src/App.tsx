@@ -57,7 +57,7 @@ if (!clerkPubKey) {
         <ol style="padding-left:1.5rem">
           <li>In File Explorer, copy <code>artifacts\\learn\\.env.example</code> and rename the copy to <code>.env</code></li>
           <li>Open the <code>.env</code> file in Notepad or VSCode</li>
-          <li>Get your Clerk key at <a href="https://dashboard.clerk.com" target="_blank">dashboard.clerk.com</a> &rarr; API Keys</li>
+          <li>Get your Clerk key at <a href="https://dashboard.clerk.com" target="_blank" rel="noopener noreferrer">dashboard.clerk.com</a> &rarr; API Keys</li>
           <li>Replace <code>pk_test_REPLACE_ME</code> with your actual key</li>
           <li>Save and restart the dev server (<code>Ctrl+C</code> then <code>pnpm --filter @workspace/learn run dev</code>)</li>
         </ol>

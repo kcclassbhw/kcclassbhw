@@ -82,9 +82,9 @@ export default function HomePage() {
       {/* ─── HERO ─────────────────────────────────────────────────────── */}
       <section className="relative min-h-[92vh] flex items-center justify-center py-20 sm:py-24 overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-[-10%] left-[10%] w-[400px] sm:w-[600px] h-[400px] sm:h-[600px] rounded-full bg-emerald-500/20 blur-[120px] animate-drift" />
-          <div className="absolute bottom-[-10%] right-[5%] w-[350px] sm:w-[500px] h-[350px] sm:h-[500px] rounded-full bg-teal-400/15 blur-[120px] animate-drift" style={{ animationDelay: "-8s" }} />
-          <div className="absolute top-[30%] right-[20%] w-[200px] sm:w-[300px] h-[200px] sm:h-[300px] rounded-full bg-emerald-300/10 blur-[80px] animate-drift" style={{ animationDelay: "-4s" }} />
+          <div className="absolute top-[-10%] left-[10%] w-[300px] sm:w-[600px] h-[300px] sm:h-[600px] rounded-full bg-emerald-500/20 blur-[60px] sm:blur-[120px] animate-drift" />
+          <div className="absolute bottom-[-10%] right-[5%] w-[250px] sm:w-[500px] h-[250px] sm:h-[500px] rounded-full bg-teal-400/15 blur-[60px] sm:blur-[120px] animate-drift" style={{ animationDelay: "-8s" }} />
+          <div className="hidden sm:block absolute top-[30%] right-[20%] w-[300px] h-[300px] rounded-full bg-emerald-300/10 blur-[80px] animate-drift" style={{ animationDelay: "-4s" }} />
         </div>
         <div className="absolute inset-0 pointer-events-none opacity-[0.025] dark:opacity-[0.04]"
           style={{ backgroundImage: 'linear-gradient(rgba(52,211,153,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(52,211,153,0.5) 1px, transparent 1px)', backgroundSize: '60px 60px' }}

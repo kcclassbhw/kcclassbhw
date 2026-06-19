@@ -269,6 +269,8 @@
 
   .animate-drift {
     animation: gradient-drift 15s ease-in-out infinite;
+    /* Promote to own GPU compositing layer — prevents layout/paint during animation */
+    will-change: transform;
   }
 
   @keyframes float {
