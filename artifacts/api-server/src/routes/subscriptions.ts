@@ -10,6 +10,8 @@ const router: IRouter = Router();
 
 const IS_PROD = process.env.ESEWA_ENV === "production";
 const ESEWA_PRODUCT_CODE = process.env.ESEWA_PRODUCT_CODE || (IS_PROD ? "" : "EPAYTEST");
+// "8gBm/:&EnhH.1/q" is eSewa's officially published sandbox secret key — not a real secret.
+// See: https://developer.esewa.com.np/ → Sandbox Credentials
 const ESEWA_SECRET_KEY = process.env.ESEWA_SECRET_KEY || (IS_PROD ? "" : "8gBm/:&EnhH.1/q");
 const ESEWA_PAYMENT_URL = IS_PROD
   ? "https://epay.esewa.com.np/api/epay/main/v2/form"

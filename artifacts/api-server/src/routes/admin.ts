@@ -7,6 +7,7 @@ import {
   UpdateMeBody,
 } from "@workspace/api-zod";
 import { requireAuth, requireAdmin, upsertUserFromClerk } from "./auth";
+import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
 
@@ -105,7 +106,7 @@ router.get("/admin/users/export", requireAdmin, async (req: any, res): Promise<v
       targetType: "users",
       metadata: { rowCount: users.length },
     })
-    .catch(() => {});
+    .catch((err) => logger.error({ err }, "Failed to write audit log: users.export"));
 
   res.setHeader("Content-Type", "text/csv");
   res.setHeader("Content-Disposition", `attachment; filename="users-${new Date().toISOString().split("T")[0]}.csv"`);
@@ -240,7 +241,7 @@ router.patch("/admin/users/:clerkId/role", requireAdmin, async (req, res): Promi
       targetId: params.data.clerkId,
       metadata: { newRole: parsed.data.role },
     })
-    .catch(() => {});
+    .catch((err) => logger.error({ err }, "Failed to write audit log: users.role_change"));
 
   const [sub] = await db.select().from(subscriptionsTable).where(eq(subscriptionsTable.userId, user.clerkId));
   res.json({

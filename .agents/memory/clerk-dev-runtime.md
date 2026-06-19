@@ -1,7 +1,15 @@
 ---
 name: Clerk dev runtime fixes
-description: Two runtime crash patterns when CLERK_SECRET_KEY is absent in dev; both must be fixed together.
+description: Root cause + fix for Clerk JS loading failure and clerkMiddleware crashes in Replit dev. Clerk is now provisioned.
 ---
+
+## Status (as of June 19 2026)
+Clerk is fully provisioned via `setupClerkWhitelabelAuth()`.
+`CLERK_SECRET_KEY`, `CLERK_PUBLISHABLE_KEY`, `VITE_CLERK_PUBLISHABLE_KEY` are all set.
+`VITE_CLERK_PROXY_URL` is intentionally NOT set in dev (correct).
+
+## Red Herring: "Clerk loaded with development keys" warning
+This console warning is EXPECTED in dev. Do NOT treat it as a bug or try to fix it.
 
 ## Problem 1 — clerkMiddleware crash (API server)
 `clerkMiddleware()` from `@clerk/express` throws synchronously on startup if `CLERK_SECRET_KEY` is absent.

@@ -51,9 +51,17 @@ function parseRssFeed(xml: string): ParsedVideo[] {
     const views = parseInt(extractAttr(block, "media:statistics", "views") || "0", 10);
     const likes = parseInt(extractAttr(block, "media:starRating", "count") || "0", 10);
 
-    // Decode XML entities
+    // Decode XML entities — named + decimal numeric character references.
     const decode = (s: string) =>
-      s.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+      s
+        .replace(/&amp;/g, "&")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"')
+        .replace(/&apos;/g, "'")
+        .replace(/&#39;/g, "'")
+        .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(parseInt(n, 10)))
+        .replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCodePoint(parseInt(h, 16)));
 
     return {
       id: videoId,
