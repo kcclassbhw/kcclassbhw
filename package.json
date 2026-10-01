@@ -6,7 +6,7 @@
     "preinstall": "node ./scripts/check-package-manager.cjs",
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
     "typecheck:libs": "tsc --build",
-    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
+    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./apps/**\" --filter \"./scripts\" --if-present run typecheck"
   },
   "private": true,
   "devDependencies": {
@@ -19,7 +19,11 @@
   "pnpm": {
     "overrides": {
       "js-cookie": "^3.0.7",
-      "lodash": "^4.18.0"
+      "lodash": "^4.18.0",
+      "brace-expansion@>=2.0.0 <2.1.6": ">=2.1.6",
+      "ip-address": ">=10.7.1",
+      "body-parser": ">=2.3.0",
+      "qs": ">=6.16.0"
     }
   }
 }

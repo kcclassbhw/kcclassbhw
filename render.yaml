@@ -5,22 +5,18 @@ services:
     plan: free
     rootDir: .
     buildCommand: pnpm install --frozen-lockfile && pnpm --filter @workspace/api-server run build
-    startCommand: node --enable-source-maps ./artifacts/api-server/dist/index.mjs
+    startCommand: node --enable-source-maps ./apps/api-server/dist/index.mjs
     healthCheckPath: /healthz
     envVars:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
         sync: false
-      - key: CLERK_PUBLISHABLE_KEY
-        sync: false
-      - key: CLERK_SECRET_KEY
+      - key: JWT_SECRET
         sync: false
       - key: CORS_ORIGIN
         sync: false
       - key: FRONTEND_URL
-        sync: false
-      - key: CLERK_WEBHOOK_SECRET
         sync: false
       - key: YOUTUBE_CHANNEL_ID
         value: UC77kf2jXTQvRl2vV3CI8oRA
