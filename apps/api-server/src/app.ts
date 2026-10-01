@@ -84,8 +84,7 @@ app.use(express.json({ limit: "256kb" }));
 app.use(express.urlencoded({ extended: true, limit: "256kb" }));
 
 // ── Rate limiting ─────────────────────────────────────────────────────────────
-// General limiter: 120 requests per 15 minutes per IP (8/min average).
-// Generous enough for normal use but blocks scrapers and runaway clients.
+// General: 120 requests per 15 minutes per IP
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 120,
@@ -95,8 +94,16 @@ const generalLimiter = rateLimit({
   skip: (req) => req.path === "/healthz",
 });
 
-// Strict limiter for payment and auth-sensitive endpoints: 20 per 15 minutes.
-// Prevents checkout/verify from being called in rapid loops.
+// Auth limiter: 10 attempts per 15 minutes — login / register are high-value targets
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many login attempts — please wait before trying again" },
+});
+
+// Payment limiter: 20 per 15 minutes
 const paymentLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
@@ -105,17 +112,19 @@ const paymentLimiter = rateLimit({
   message: { error: "Too many payment requests — please wait before trying again" },
 });
 
-// Admin limiter: 200 requests per 15 minutes — admins do bulk work but
-// we still protect against accidental runaway scripts or credential theft.
+// Admin limiter: 60 per 15 minutes (admins do work but 403s should lock quickly)
 const adminLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 200,
+  max: 60,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Too many admin requests — please wait a moment" },
 });
 
 app.use("/api", generalLimiter);
+app.use("/api/auth/login", authLimiter);
+app.use("/api/auth/register", authLimiter);
+app.use("/api/auth/refresh", authLimiter);
 app.use("/api/subscriptions/checkout", paymentLimiter);
 app.use("/api/subscriptions/verify", paymentLimiter);
 app.use("/api/admin", adminLimiter);

@@ -6,7 +6,8 @@ import {
   UpdateUserRoleBody,
   UpdateMeBody,
 } from "@workspace/api-zod";
-import { requireAuth, requireAdmin, upsertUserFromClerk } from "./auth";
+import { requireAuth, upsertUserFromClerk } from "./auth";
+import { requireAdminStrict, auditLog } from "../middleware/adminGuard";
 import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
@@ -15,7 +16,7 @@ const MONTHLY_PRICE = parseInt(process.env.ESEWA_MONTHLY_PRICE || "299", 10);
 const YEARLY_PRICE = parseInt(process.env.ESEWA_YEARLY_PRICE || "2399", 10);
 
 // GET /admin/stats
-router.get("/admin/stats", requireAdmin, async (_req, res): Promise<void> => {
+router.get("/admin/stats", requireAdminStrict, async (_req, res): Promise<void> => {
   const now = new Date();
 
   // Parallelise all independent DB queries
@@ -53,7 +54,7 @@ router.get("/admin/stats", requireAdmin, async (_req, res): Promise<void> => {
 });
 
 // GET /admin/users
-router.get("/admin/users", requireAdmin, async (_req, res): Promise<void> => {
+router.get("/admin/users", requireAdminStrict, async (_req, res): Promise<void> => {
   const [users, subs] = await Promise.all([
     db.select().from(usersTable).orderBy(usersTable.createdAt),
     db.select().from(subscriptionsTable),
@@ -74,7 +75,7 @@ router.get("/admin/users", requireAdmin, async (_req, res): Promise<void> => {
 // GET /admin/users/export — CSV download
 // SECURITY: every export is audit-logged with the admin's ID and row count
 // so that data exfiltration via a compromised admin account is detectable.
-router.get("/admin/users/export", requireAdmin, async (req: any, res): Promise<void> => {
+router.get("/admin/users/export", requireAdminStrict, async (req: any, res): Promise<void> => {
   const [users, subs] = await Promise.all([
     db.select().from(usersTable).orderBy(usersTable.createdAt),
     db.select().from(subscriptionsTable),
@@ -99,13 +100,7 @@ router.get("/admin/users/export", requireAdmin, async (req: any, res): Promise<v
   ];
 
   // Audit log — fire and forget; never block the response
-  db.insert(auditLogsTable)
-    .values({
-      adminId: req.userId,
-      action: "users.export",
-      targetType: "users",
-      metadata: { rowCount: users.length },
-    })
+  auditLog(req.userId, "users.export", "users", undefined, { rowCount: users.length })
     .catch((err) => logger.error({ err }, "Failed to write audit log: users.export"));
 
   res.setHeader("Content-Type", "text/csv");
@@ -114,7 +109,7 @@ router.get("/admin/users/export", requireAdmin, async (req: any, res): Promise<v
 });
 
 // GET /admin/subscriptions — joined with user info
-router.get("/admin/subscriptions", requireAdmin, async (_req, res): Promise<void> => {
+router.get("/admin/subscriptions", requireAdminStrict, async (_req, res): Promise<void> => {
   const [subs, users] = await Promise.all([
     db.select().from(subscriptionsTable).orderBy(desc(subscriptionsTable.createdAt)),
     db.select().from(usersTable),
@@ -129,7 +124,7 @@ router.get("/admin/subscriptions", requireAdmin, async (_req, res): Promise<void
 });
 
 // POST /admin/subscriptions/grant — manually grant premium (atomic upsert)
-router.post("/admin/subscriptions/grant", requireAdmin, async (req, res): Promise<void> => {
+router.post("/admin/subscriptions/grant", requireAdminStrict, async (req, res): Promise<void> => {
   const { userId, plan } = req.body as { userId: string; plan: string };
   if (!userId || !plan) { res.status(400).json({ error: "userId and plan required" }); return; }
   if (!["monthly", "yearly"].includes(plan)) { res.status(400).json({ error: "plan must be monthly or yearly" }); return; }
@@ -149,7 +144,7 @@ router.post("/admin/subscriptions/grant", requireAdmin, async (req, res): Promis
 });
 
 // DELETE /admin/subscriptions/:userId/revoke — revoke premium
-router.delete("/admin/subscriptions/:userId/revoke", requireAdmin, async (req, res): Promise<void> => {
+router.delete("/admin/subscriptions/:userId/revoke", requireAdminStrict, async (req, res): Promise<void> => {
   const { userId } = req.params;
   await db.update(subscriptionsTable)
     .set({ status: "inactive", plan: "none" })
@@ -158,7 +153,7 @@ router.delete("/admin/subscriptions/:userId/revoke", requireAdmin, async (req, r
 });
 
 // GET /admin/enrollment-stats — course enrollments from progress table
-router.get("/admin/enrollment-stats", requireAdmin, async (_req, res): Promise<void> => {
+router.get("/admin/enrollment-stats", requireAdminStrict, async (_req, res): Promise<void> => {
   const [courses, progress] = await Promise.all([
     db.select().from(coursesTable).orderBy(coursesTable.title),
     db.select().from(progressTable),
@@ -189,7 +184,7 @@ router.get("/admin/enrollment-stats", requireAdmin, async (_req, res): Promise<v
 });
 
 // GET /admin/activity — recent platform activity
-router.get("/admin/activity", requireAdmin, async (_req, res): Promise<void> => {
+router.get("/admin/activity", requireAdminStrict, async (_req, res): Promise<void> => {
   const [users, subs] = await Promise.all([
     db.select().from(usersTable).orderBy(desc(usersTable.createdAt)).limit(15),
     db.select().from(subscriptionsTable).orderBy(desc(subscriptionsTable.updatedAt)).limit(15),
@@ -219,7 +214,7 @@ router.get("/admin/activity", requireAdmin, async (_req, res): Promise<void> => 
 });
 
 // PATCH /admin/users/:clerkId/role
-router.patch("/admin/users/:clerkId/role", requireAdmin, async (req, res): Promise<void> => {
+router.patch("/admin/users/:clerkId/role", requireAdminStrict, async (req, res): Promise<void> => {
   const params = UpdateUserRoleParams.safeParse({ clerkId: req.params.clerkId });
   if (!params.success) { res.status(400).json({ error: "Invalid clerkId" }); return; }
   const parsed = UpdateUserRoleBody.safeParse(req.body);
@@ -233,14 +228,7 @@ router.patch("/admin/users/:clerkId/role", requireAdmin, async (req, res): Promi
   if (!user) { res.status(404).json({ error: "User not found" }); return; }
 
   // Audit log role change — fire and forget
-  db.insert(auditLogsTable)
-    .values({
-      adminId: (req as any).userId,
-      action: "users.role_change",
-      targetType: "user",
-      targetId: params.data.clerkId,
-      metadata: { newRole: parsed.data.role },
-    })
+  auditLog((req as any).userId, "users.role_change", "user", params.data.clerkId, { newRole: parsed.data.role })
     .catch((err) => logger.error({ err }, "Failed to write audit log: users.role_change"));
 
   const [sub] = await db.select().from(subscriptionsTable).where(eq(subscriptionsTable.userId, user.clerkId));
@@ -252,19 +240,19 @@ router.patch("/admin/users/:clerkId/role", requireAdmin, async (req, res): Promi
 
 // --- Announcements ---
 
-router.get("/admin/announcements", requireAdmin, async (_req, res): Promise<void> => {
+router.get("/admin/announcements", requireAdminStrict, async (_req, res): Promise<void> => {
   const announcements = await db.select().from(announcementsTable).orderBy(desc(announcementsTable.createdAt));
   res.json(announcements);
 });
 
-router.post("/admin/announcements", requireAdmin, async (req, res): Promise<void> => {
+router.post("/admin/announcements", requireAdminStrict, async (req, res): Promise<void> => {
   const { message, type = "info" } = req.body as { message: string; type?: string };
   if (!message?.trim()) { res.status(400).json({ error: "message required" }); return; }
   const [announcement] = await db.insert(announcementsTable).values({ message: message.trim(), type }).returning();
   res.json(announcement);
 });
 
-router.patch("/admin/announcements/:id", requireAdmin, async (req, res): Promise<void> => {
+router.patch("/admin/announcements/:id", requireAdminStrict, async (req, res): Promise<void> => {
   const { isActive } = req.body as { isActive: boolean };
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
@@ -273,7 +261,7 @@ router.patch("/admin/announcements/:id", requireAdmin, async (req, res): Promise
   res.json(announcement);
 });
 
-router.delete("/admin/announcements/:id", requireAdmin, async (req, res): Promise<void> => {
+router.delete("/admin/announcements/:id", requireAdminStrict, async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
   await db.delete(announcementsTable).where(eq(announcementsTable.id, id));

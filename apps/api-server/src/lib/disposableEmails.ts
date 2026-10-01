@@ -29,7 +29,6 @@ const FALLBACK_DOMAINS = new Set([
 export function isDisposableEmail(email: string): boolean {
   if (!email || !email.includes("@")) return false;
   const domain = email.split("@").pop()!.toLowerCase().trim();
-  return DOMAIN_SET.size > 0
-    ? DOMAIN_SET.has(domain)
-    : FALLBACK_DOMAINS.has(domain);
+  // Always check both sources — npm package may not have all domains
+  return DOMAIN_SET.has(domain) || FALLBACK_DOMAINS.has(domain);
 }
