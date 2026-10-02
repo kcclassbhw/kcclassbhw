@@ -1,6 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "pnpm install --no-frozen-lockfile && pnpm --filter @workspace/learn run build",
+  "installCommand": "pnpm install --no-frozen-lockfile",
+  "buildCommand": "pnpm --filter @workspace/learn run build",
   "outputDirectory": "apps/learn/dist/public",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
