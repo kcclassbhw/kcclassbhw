@@ -160,8 +160,15 @@ Every `/admin/*` route passes through `requireAdminStrict` in `adminGuard.ts`:
   - Add all ✅ env vars listed below
   - Test: `curl https://YOUR-RENDER-URL.onrender.com/healthz`
 
-- [ ] **Deploy frontend** — Use **Netlify** (recommended) or Cloudflare Pages
-  - Vercel was abandoned due to monorepo complexity
+- [ ] **Deploy frontend** — Use **Vercel**, **Netlify**, or **Cloudflare Pages**
+
+  **Vercel (Zero-config with root vercel.json):**
+  - vercel.com → Add New Project → Import `kcclassbhw/kcclassbhw`
+  - Root directory: leave as `./` (root)
+  - Framework Preset: Vite (or Other)
+  - Build & output auto-configured by root `vercel.json` (`apps/learn/dist/public`)
+  - Env var: `VITE_API_URL=https://YOUR-RENDER-URL.onrender.com`
+  - Click Deploy!
 
   **Netlify (easiest):**
   - netlify.com → Add new site → Import from Git → pick repo
