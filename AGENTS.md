@@ -165,9 +165,11 @@ Every `/admin/*` route passes through `requireAdminStrict` in `adminGuard.ts`:
 
   **Netlify (easiest):**
   - netlify.com → Add new site → Import from Git → pick repo
-  - Base directory: `apps/learn`
-  - Build command: `pnpm install --no-frozen-lockfile && pnpm run build`
-  - Publish directory: `apps/learn/dist`
+  - `netlify.toml` is pre-configured in root — automatically sets up build and SPA redirects!
+  - Or manual settings:
+    - Base directory: (leave empty / root)
+    - Build command: `pnpm install --no-frozen-lockfile && pnpm --filter @workspace/learn run build`
+    - Publish directory: `apps/learn/dist/public`
   - Env var: `VITE_API_URL=https://YOUR-RENDER-URL.onrender.com`
 
   **Cloudflare Pages (fastest CDN):**
@@ -302,8 +304,8 @@ API_URL=https://your-render-url.onrender.com/api npx tsx scripts/security-test.t
 [ ] 2. Add all ✅ env vars in Render dashboard
 [ ] 3. Deploy → watch build logs → wait for "Live"
 [ ] 4. Test: curl https://YOUR-RENDER-URL.onrender.com/healthz
-[ ] 5. netlify.com → Add new site → Import from Git → pick repo
-[ ] 6. Base dir: apps/learn | Build: pnpm install --no-frozen-lockfile && pnpm run build | Publish: apps/learn/dist
+[ ] 5. netlify.com → Add new site → Import from Git → pick repo (build & redirects auto-configured via netlify.toml)
+[ ] 6. (If setting manually) Build: pnpm install --no-frozen-lockfile && pnpm --filter @workspace/learn run build | Publish: apps/learn/dist/public
 [ ] 7. Add VITE_API_URL=https://YOUR-RENDER-URL.onrender.com in Netlify env vars
 [ ] 8. Deploy Netlify → copy frontend URL
 [ ] 9. Update CORS_ORIGIN + FRONTEND_URL on Render → trigger redeploy
